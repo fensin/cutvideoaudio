@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎬 Редактор Видео и Аудио</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎬 Медиа-редактор</title>
     <style>
         * {
             margin: 0;
@@ -84,14 +84,20 @@
             display: none;
         }
 
-        .player-section {
+        .file-bar {
             display: none;
-            margin-bottom: 24px;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
         }
 
-        .player-section.visible {
-            display: block;
-            animation: fadeIn 0.4s ease;
+        .file-bar.visible {
+            display: flex;
+            animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
@@ -99,77 +105,271 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .player-section video,
-        .player-section audio {
-            width: 100%;
-            border-radius: 12px;
-            background: #000;
-            max-height: 400px;
-        }
-
-        .file-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .file-info .name {
+        .file-bar .name {
             color: #fff;
             font-weight: 500;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .file-info .size {
+        .file-bar .size {
             color: rgba(255, 255, 255, 0.4);
             font-size: 13px;
         }
 
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 20px;
+        .file-bar .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
 
-        @media (max-width: 600px) {
-            .controls {
-                grid-template-columns: 1fr;
-            }
+        .file-bar .close-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
         }
 
-        .control-group {
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 14px;
-            padding: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+        .player-wrapper {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            display: none;
         }
 
-        .control-group label {
+        .player-wrapper.visible {
             display: block;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 8px;
         }
 
-        .control-group input[type="range"] {
+        .player-wrapper video,
+        .player-wrapper audio {
             width: 100%;
+            display: block;
+            max-height: 400px;
+        }
+
+        .timeline-wrapper {
+            padding: 8px 16px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .timeline-container {
+            position: relative;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .timeline-container .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            pointer-events: none;
+            transition: width 0.05s linear;
+        }
+
+        .timeline-container .trim-region {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.2);
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .timeline-container .trim-handle {
+            position: absolute;
+            top: -4px;
+            width: 12px;
+            height: calc(100% + 8px);
+            background: rgba(102, 126, 234, 0.8);
+            border-radius: 4px;
+            cursor: ew-resize;
+            pointer-events: all;
+            transition: background 0.2s;
+        }
+
+        .timeline-container .trim-handle:hover {
+            background: #667eea;
+        }
+
+        .timeline-container .trim-handle.left {
+            left: 0;
+        }
+
+        .timeline-container .trim-handle.right {
+            right: 0;
+        }
+
+        .timeline-container .time-label {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            font-family: monospace;
+            pointer-events: none;
+        }
+
+        .timeline-container .time-label.start {
+            left: 4px;
+        }
+
+        .timeline-container .time-label.end {
+            right: 4px;
+        }
+
+        .timeline-container .playhead {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: #fff;
+            pointer-events: none;
+            transition: left 0.05s linear;
+        }
+
+        .timeline-info {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 11px;
+            font-family: monospace;
+            margin-top: 4px;
+            padding: 0 4px;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px 16px;
+            flex-wrap: wrap;
+        }
+
+        .player-controls .btn-icon {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-controls .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .player-controls .volume-slider {
+            flex: 1;
+            min-width: 80px;
+            max-width: 150px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .player-controls .volume-slider input[type="range"] {
+            flex: 1;
             accent-color: #667eea;
             background: transparent;
             cursor: pointer;
         }
 
-        .control-group .value {
+        .player-controls .volume-slider .vol-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: none;
+        }
+
+        .settings-row.visible {
+            display: flex;
+        }
+
+        .settings-row .setting {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+
+        .settings-row .setting input[type="text"] {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
             color: #fff;
-            font-size: 14px;
-            font-weight: 600;
-            text-align: right;
-            margin-top: 4px;
+            font-size: 13px;
+            outline: none;
+            width: 80px;
+            font-family: monospace;
+            text-align: center;
+        }
+
+        .settings-row .setting input[type="text"]:focus {
+            border-color: #667eea;
+        }
+
+        .settings-row .setting select {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .settings-row .setting select:focus {
+            border-color: #667eea;
+        }
+
+        .settings-row .setting input[type="range"] {
+            accent-color: #667eea;
+            cursor: pointer;
+            width: 100px;
         }
 
         .actions {
@@ -232,6 +432,15 @@
             box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
         }
 
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+        }
+
         .btn-outline {
             background: transparent;
             color: rgba(255, 255, 255, 0.6);
@@ -241,6 +450,15 @@
         .btn-outline:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.05);
             color: #fff;
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: #fff;
+        }
+
+        .btn-purple:hover:not(:disabled) {
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
         }
 
         .progress-section {
@@ -283,7 +501,7 @@
             font-family: 'Consolas', monospace;
             font-size: 12px;
             color: rgba(255, 255, 255, 0.5);
-            max-height: 150px;
+            max-height: 120px;
             overflow-y: auto;
             display: none;
             line-height: 1.6;
@@ -298,6 +516,57 @@
         .log .info { color: #60a5fa; }
         .log .warning { color: #fbbf24; }
 
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal {
+            background: rgba(30, 30, 60, 0.95);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal h3 {
+            color: #fff;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .modal p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .modal .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal .modal-actions .btn {
+            flex: 1;
+        }
+
         .footer {
             text-align: center;
             margin-top: 32px;
@@ -307,24 +576,13 @@
             color: rgba(255, 255, 255, 0.15);
         }
 
-        .warning-box {
-            background: rgba(251, 191, 36, 0.1);
-            border: 1px solid rgba(251, 191, 36, 0.2);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 20px;
-            color: #fbbf24;
-            font-size: 14px;
-            display: none;
-        }
-
-        .warning-box.visible {
-            display: block;
-            animation: fadeIn 0.4s ease;
-        }
-
-        .warning-box strong {
-            color: #fff;
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .actions { flex-direction: column; }
+            .btn { min-width: unset; }
+            .settings-row { flex-direction: column; }
+            .player-controls { flex-wrap: wrap; }
+            .player-controls .volume-slider { max-width: unset; }
         }
     </style>
 </head>
@@ -334,11 +592,7 @@
         <div class="header">
             <span class="logo">🎬</span>
             <h1>Media <span>Editor</span></h1>
-            <p>Обрезай видео, увеличивай громкость</p>
-        </div>
-
-        <div class="warning-box" id="warningBox">
-            ⚠️ <strong>Важно:</strong> Для работы редактора используй браузер <strong>Google Chrome</strong> или <strong>Microsoft Edge</strong>. Другие браузеры могут не поддерживать все функции.
+            <p>Обрезай, меняй громкость, конвертируй видео в аудио</p>
         </div>
 
         <div class="upload-area" id="uploadArea">
@@ -350,105 +604,160 @@
             <input type="file" id="fileInput" accept="video/*,audio/*">
         </div>
 
-        <div class="player-section" id="playerSection">
-            <div class="file-info">
-                <span class="name" id="fileName">file.mp4</span>
-                <span class="size" id="fileSize">0 MB</span>
-                <span class="size" id="fileType">видео</span>
-            </div>
+        <div class="file-bar" id="fileBar">
+            <span class="name" id="fileName">file.mp4</span>
+            <span class="size" id="fileSize">0 MB</span>
+            <button class="close-btn" id="closeBtn" title="Удалить файл">✕</button>
+        </div>
+
+        <div class="player-wrapper" id="playerWrapper">
             <div id="playerContainer">
                 <video id="mediaPlayer" controls></video>
             </div>
+
+            <div class="timeline-wrapper">
+                <div class="timeline-container" id="timelineContainer">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="trim-region" id="trimRegion"></div>
+                    <div class="trim-handle left" id="trimHandleLeft"></div>
+                    <div class="trim-handle right" id="trimHandleRight"></div>
+                    <div class="playhead" id="playhead"></div>
+                    <div class="time-label start" id="timeLabelStart">0:00</div>
+                    <div class="time-label end" id="timeLabelEnd">0:00</div>
+                </div>
+                <div class="timeline-info">
+                    <span id="currentTimeDisplay">0:00</span>
+                    <span id="durationDisplay">0:00</span>
+                </div>
+            </div>
+
+            <div class="player-controls">
+                <button class="btn-icon" id="playBtn" title="Воспроизвести/Пауза">▶</button>
+                <button class="btn-icon" id="restartBtn" title="В начало">⏮</button>
+                <div class="volume-slider">
+                    <span style="color:rgba(255,255,255,0.4);font-size:14px;">🔊</span>
+                    <input type="range" id="volumeSlider" min="0" max="200" value="100">
+                    <span class="vol-label" id="volLabel">100%</span>
+                </div>
+                <button class="btn-icon" id="muteBtn" title="Выключить звук">🔇</button>
+            </div>
         </div>
 
-        <div class="player-section" id="controlsSection">
-            <div class="controls">
-                <div class="control-group">
-                    <label>✂️ Начало (сек)</label>
-                    <input type="range" id="startTime" min="0" max="100" value="0" step="0.1">
-                    <div class="value" id="startValue">0.0</div>
-                </div>
-                <div class="control-group">
-                    <label>✂️ Конец (сек)</label>
-                    <input type="range" id="endTime" min="0" max="100" value="100" step="0.1">
-                    <div class="value" id="endValue">0.0</div>
-                </div>
-                <div class="control-group">
-                    <label>🔊 Громкость</label>
-                    <input type="range" id="volumeBoost" min="1" max="5" value="1" step="0.1">
-                    <div class="value" id="volumeValue">1.0x</div>
-                </div>
-                <div class="control-group">
-                    <label>📐 Качество</label>
-                    <select id="previewSize" style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#fff;font-size:14px;outline:none;">
-                        <option value="480">480p</option>
-                        <option value="720" selected>720p</option>
-                        <option value="1080">1080p</option>
-                    </select>
-                </div>
+        <div class="settings-row" id="settingsRow">
+            <div class="setting">
+                <span>📐 Качество</span>
+                <select id="previewSize">
+                    <option value="480">480p</option>
+                    <option value="720" selected>720p</option>
+                    <option value="1080">1080p</option>
+                </select>
             </div>
+            <div class="setting">
+                <span>🎚️ Громкость</span>
+                <input type="range" id="volumeBoost" min="1" max="5" value="1" step="0.1">
+                <span id="volumeBoostLabel" style="min-width:35px;text-align:center;color:#fff;">1.0x</span>
+            </div>
+            <div class="setting">
+                <span>⏱️ Начало</span>
+                <input type="text" id="trimStartInput" value="00:00" placeholder="00:00">
+            </div>
+            <div class="setting">
+                <span>⏱️ Конец</span>
+                <input type="text" id="trimEndInput" value="00:00" placeholder="00:00">
+                <button class="btn-icon" id="applyTimeBtn" style="width:28px;height:28px;font-size:14px;background:rgba(102,126,234,0.2);color:#667eea;border:none;border-radius:50%;cursor:pointer;">✓</button>
+            </div>
+        </div>
 
-            <div class="actions">
-                <button class="btn btn-success" id="trimBtn">✂️ Обрезать</button>
-                <button class="btn btn-primary" id="volumeBtn">🔊 Увеличить громкость</button>
-                <button class="btn btn-outline" id="previewBtn">👁️ Превью</button>
-                <button class="btn btn-danger" id="resetBtn">🔄 Сбросить</button>
-            </div>
+        <div class="actions">
+            <button class="btn btn-success" id="trimBtn">✂️ Обрезать</button>
+            <button class="btn btn-warning" id="applyVolumeBtn">🔊 Применить громкость</button>
+            <button class="btn btn-purple" id="videoToAudioBtn">🎵 Видео → Аудио</button>
+            <button class="btn btn-outline" id="resetBtn">🔄 Сбросить</button>
         </div>
 
         <div class="progress-section" id="progressSection">
-            <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+            <div class="progress-bar"><div class="fill" id="progressFillBar"></div></div>
             <div class="progress-text" id="progressText">Обработка...</div>
         </div>
 
         <div class="log" id="log"></div>
 
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal">
+                <h3>⚠️ Подтверждение</h3>
+                <p id="modalText">Вы уверены?</p>
+                <div class="modal-actions">
+                    <button class="btn btn-danger" id="modalConfirm">Да</button>
+                    <button class="btn btn-outline" id="modalCancel">Отмена</button>
+                </div>
+            </div>
+        </div>
+
         <div class="footer">
-            🎵 Всё обрабатывается локально в твоём браузере &bull; Файлы не покидают компьютер
+            🎵 Всё обрабатывается локально в браузере &bull; Файлы не покидают компьютер
         </div>
     </div>
 
     <script>
         // ============================================================
-        //  УПРОЩЁННАЯ ВЕРСИЯ МЕДИА-РЕДАКТОРА
+        //  ПОЛНАЯ ЛОГИКА
         // ============================================================
-
-        // === ПРОВЕРКА БРАУЗЕРА ===
-        const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-        const isEdge = /Edg/.test(navigator.userAgent);
-
-        if (!isChrome && !isEdge) {
-            document.getElementById('warningBox').classList.add('visible');
-        }
 
         // === ЭЛЕМЕНТЫ ===
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
-        const playerSection = document.getElementById('playerSection');
-        const controlsSection = document.getElementById('controlsSection');
-        const mediaPlayer = document.getElementById('mediaPlayer');
+        const fileBar = document.getElementById('fileBar');
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
-        const fileType = document.getElementById('fileType');
-        const startTime = document.getElementById('startTime');
-        const endTime = document.getElementById('endTime');
-        const startValue = document.getElementById('startValue');
-        const endValue = document.getElementById('endValue');
-        const volumeBoost = document.getElementById('volumeBoost');
-        const volumeValue = document.getElementById('volumeValue');
+        const closeBtn = document.getElementById('closeBtn');
+        const playerWrapper = document.getElementById('playerWrapper');
+        const playerContainer = document.getElementById('playerContainer');
+        const mediaPlayer = document.getElementById('mediaPlayer');
+        const timelineContainer = document.getElementById('timelineContainer');
+        const progressFill = document.getElementById('progressFill');
+        const trimRegion = document.getElementById('trimRegion');
+        const trimHandleLeft = document.getElementById('trimHandleLeft');
+        const trimHandleRight = document.getElementById('trimHandleRight');
+        const playhead = document.getElementById('playhead');
+        const timeLabelStart = document.getElementById('timeLabelStart');
+        const timeLabelEnd = document.getElementById('timeLabelEnd');
+        const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+        const durationDisplay = document.getElementById('durationDisplay');
+        const playBtn = document.getElementById('playBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volLabel = document.getElementById('volLabel');
+        const muteBtn = document.getElementById('muteBtn');
+        const settingsRow = document.getElementById('settingsRow');
         const previewSize = document.getElementById('previewSize');
+        const volumeBoost = document.getElementById('volumeBoost');
+        const volumeBoostLabel = document.getElementById('volumeBoostLabel');
+        const trimStartInput = document.getElementById('trimStartInput');
+        const trimEndInput = document.getElementById('trimEndInput');
+        const applyTimeBtn = document.getElementById('applyTimeBtn');
         const trimBtn = document.getElementById('trimBtn');
-        const volumeBtn = document.getElementById('volumeBtn');
-        const previewBtn = document.getElementById('previewBtn');
+        const applyVolumeBtn = document.getElementById('applyVolumeBtn');
+        const videoToAudioBtn = document.getElementById('videoToAudioBtn');
         const resetBtn = document.getElementById('resetBtn');
         const progressSection = document.getElementById('progressSection');
-        const progressFill = document.getElementById('progressFill');
+        const progressFillBar = document.getElementById('progressFillBar');
         const progressText = document.getElementById('progressText');
         const log = document.getElementById('log');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalText = document.getElementById('modalText');
+        const modalConfirm = document.getElementById('modalConfirm');
+        const modalCancel = document.getElementById('modalCancel');
 
         let currentFile = null;
         let currentFileUrl = null;
         let isProcessing = false;
+        let isPlaying = false;
+        let trimStart = 0;
+        let trimEnd = 0;
+        let duration = 0;
+        let isDragging = false;
+        let dragType = null;
+        let volumeBoostValue = 1;
 
         // === ЛОГГЕР ===
         function addLog(message, type = 'info') {
@@ -461,323 +770,440 @@
             console.log(`[${type}]`, message);
         }
 
-        // === ЗАГРУЗКА ФАЙЛА ===
-        function loadFile(file) {
-            if (!file) return;
-
-            try {
-                currentFile = file;
-                const url = URL.createObjectURL(file);
-                currentFileUrl = url;
-
-                const type = file.type.startsWith('video/') ? 'video' : 'audio';
-                const isVideo = type === 'video';
-
-                fileName.textContent = file.name;
-                fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-                fileType.textContent = isVideo ? '🎬 видео' : '🎵 аудио';
-
-                // Создаём плеер
-                const container = document.getElementById('playerContainer');
-                container.innerHTML = '';
-
-                const player = document.createElement(isVideo ? 'video' : 'audio');
-                player.controls = true;
-                player.style.width = '100%';
-                if (isVideo) {
-                    player.style.maxHeight = '400px';
-                    player.style.borderRadius = '12px';
-                    player.style.background = '#000';
-                }
-                player.src = url;
-                player.load();
-
-                container.appendChild(player);
-
-                // Сохраняем ссылку на плеер
-                window.mediaPlayer = player;
-
-                // Показываем секции
-                playerSection.classList.add('visible');
-                controlsSection.classList.add('visible');
-
-                // Настраиваем слайдеры
-                player.addEventListener('loadedmetadata', () => {
-                    const duration = player.duration;
-                    if (duration && isFinite(duration)) {
-                        startTime.max = duration;
-                        endTime.max = duration;
-                        endTime.value = duration;
-                        startValue.textContent = '0.0';
-                        endValue.textContent = duration.toFixed(1);
-                        addLog(`📊 Длительность: ${duration.toFixed(1)}с`, 'info');
-                    }
-                });
-
-                addLog(`✅ Загружен: ${file.name} (${type})`, 'success');
-
-            } catch (err) {
-                addLog(`❌ Ошибка загрузки: ${err.message}`, 'error');
-                console.error(err);
-            }
+        // === ФОРМАТИРОВАНИЕ ВРЕМЕНИ ===
+        function formatTime(seconds) {
+            if (!seconds || !isFinite(seconds)) return '0:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
         }
 
-        // === УПРОЩЁННАЯ ОБРАБОТКА (только обрезка) ===
-        async function processMedia() {
-            if (!currentFile || isProcessing) {
-                addLog('⚠️ Сначала загрузи файл!', 'warning');
+        function parseTime(str) {
+            const parts = str.split(':');
+            if (parts.length === 2) {
+                return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            } else if (parts.length === 3) {
+                return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+            }
+            return parseFloat(str) || 0;
+        }
+
+        // === МОДАЛКА ===
+        function showModal(text, onConfirm) {
+            modalText.textContent = text;
+            modalOverlay.classList.add('visible');
+            modalConfirm.onclick = () => {
+                modalOverlay.classList.remove('visible');
+                if (onConfirm) onConfirm();
+            };
+            modalCancel.onclick = () => modalOverlay.classList.remove('visible');
+        }
+
+        // === ЗАГРУЗКА ===
+        function loadFile(file) {
+            if (!file) return;
+            if (currentFileUrl) URL.revokeObjectURL(currentFileUrl);
+
+            currentFile = file;
+            const url = URL.createObjectURL(file);
+            currentFileUrl = url;
+
+            const isVideo = file.type.startsWith('video/');
+
+            fileName.textContent = file.name;
+            fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+            fileBar.classList.add('visible');
+
+            playerContainer.innerHTML = '';
+            const player = document.createElement(isVideo ? 'video' : 'audio');
+            player.controls = false;
+            player.style.width = '100%';
+            if (isVideo) {
+                player.style.maxHeight = '400px';
+                player.style.background = '#000';
+            }
+            player.src = url;
+            player.load();
+            playerContainer.appendChild(player);
+            window.mediaPlayer = player;
+
+            playerWrapper.classList.add('visible');
+            settingsRow.classList.add('visible');
+
+            player.addEventListener('loadedmetadata', () => {
+                duration = player.duration;
+                if (duration && isFinite(duration)) {
+                    trimEnd = duration;
+                    updateTimeline();
+                    durationDisplay.textContent = formatTime(duration);
+                    trimEndInput.value = formatTime(duration);
+                    trimBtn.disabled = false;
+                    applyVolumeBtn.disabled = false;
+                    videoToAudioBtn.disabled = false;
+                    addLog(`📊 Длительность: ${formatTime(duration)}`, 'info');
+                }
+            });
+
+            player.addEventListener('timeupdate', () => {
+                if (!isDragging && duration) {
+                    const progress = (player.currentTime / duration) * 100;
+                    playhead.style.left = progress + '%';
+                    currentTimeDisplay.textContent = formatTime(player.currentTime);
+                }
+            });
+
+            player.addEventListener('play', () => { isPlaying = true;
+                playBtn.textContent = '⏸'; });
+            player.addEventListener('pause', () => { isPlaying = false;
+                playBtn.textContent = '▶'; });
+
+            player.volume = volumeSlider.value / 100;
+            volLabel.textContent = Math.round(volumeSlider.value) + '%';
+
+            addLog(`✅ Загружен: ${file.name}`, 'success');
+            updateTimeline();
+        }
+
+        // === ТАЙМЛАЙН ===
+        function updateTimeline() {
+            if (!duration || !isFinite(duration)) return;
+            const startPercent = (trimStart / duration) * 100;
+            const endPercent = (trimEnd / duration) * 100;
+
+            trimRegion.style.left = startPercent + '%';
+            trimRegion.style.width = (endPercent - startPercent) + '%';
+            trimHandleLeft.style.left = startPercent + '%';
+            trimHandleRight.style.left = endPercent + '%';
+            timeLabelStart.textContent = formatTime(trimStart);
+            timeLabelEnd.textContent = formatTime(trimEnd);
+        }
+
+        function initDrag(e, type) {
+            if (!duration || isDragging) return;
+            isDragging = true;
+            dragType = type;
+            const rect = timelineContainer.getBoundingClientRect();
+
+            const onMove = (ev) => {
+                const x = (ev.clientX - rect.left) / rect.width;
+                const time = Math.max(0, Math.min(1, x)) * duration;
+                if (type === 'left' && time < trimEnd - 0.5) {
+                    trimStart = time;
+                    trimStartInput.value = formatTime(time);
+                } else if (type === 'right' && time > trimStart + 0.5) {
+                    trimEnd = time;
+                    trimEndInput.value = formatTime(time);
+                }
+                updateTimeline();
+            };
+
+            const onEnd = () => {
+                isDragging = false;
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onEnd);
+            };
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onEnd);
+        }
+
+        trimHandleLeft.addEventListener('mousedown', (e) => initDrag(e, 'left'));
+        trimHandleRight.addEventListener('mousedown', (e) => initDrag(e, 'right'));
+
+        timelineContainer.addEventListener('click', (e) => {
+            if (isDragging) return;
+            const rect = timelineContainer.getBoundingClientRect();
+            const time = ((e.clientX - rect.left) / rect.width) * duration;
+            const player = window.mediaPlayer;
+            if (player) player.currentTime = Math.max(0, Math.min(time, duration));
+        });
+
+        // Таймкоды вручную
+        applyTimeBtn.addEventListener('click', () => {
+            const start = parseTime(trimStartInput.value);
+            const end = parseTime(trimEndInput.value);
+            if (!isFinite(start) || !isFinite(end) || start < 0 || end > duration || start >= end) {
+                addLog('❌ Неверный формат времени', 'error');
                 return;
             }
+            trimStart = start;
+            trimEnd = end;
+            updateTimeline();
+            addLog(`⏱️ Установлено: ${formatTime(start)} — ${formatTime(end)}`, 'info');
+        });
 
-            const start = parseFloat(startTime.value);
-            const end = parseFloat(endTime.value);
-            const volume = parseFloat(volumeBoost.value);
-            const action = this === trimBtn ? 'trim' : 'volume';
+        // === УПРАВЛЕНИЕ ===
+        playBtn.addEventListener('click', () => {
+            const player = window.mediaPlayer;
+            if (!player) return;
+            isPlaying ? player.pause() : player.play();
+        });
 
-            if (action === 'trim' && (end - start) <= 0) {
-                addLog('❌ Конец должен быть больше начала', 'error');
+        restartBtn.addEventListener('click', () => {
+            const player = window.mediaPlayer;
+            if (!player) return;
+            player.currentTime = trimStart;
+            if (!isPlaying) player.play();
+        });
+
+        volumeSlider.addEventListener('input', () => {
+            const player = window.mediaPlayer;
+            if (player) {
+                const val = volumeSlider.value / 100;
+                player.volume = val;
+                volLabel.textContent = Math.round(volumeSlider.value) + '%';
+                muteBtn.textContent = val === 0 ? '🔈' : '🔊';
+            }
+        });
+
+        muteBtn.addEventListener('click', () => {
+            const player = window.mediaPlayer;
+            if (!player) return;
+            if (player.volume > 0) {
+                player.volume = 0;
+                volumeSlider.value = 0;
+                volLabel.textContent = '0%';
+                muteBtn.textContent = '🔈';
+            } else {
+                player.volume = 1;
+                volumeSlider.value = 100;
+                volLabel.textContent = '100%';
+                muteBtn.textContent = '🔊';
+            }
+        });
+
+        volumeBoost.addEventListener('input', () => {
+            volumeBoostValue = parseFloat(volumeBoost.value);
+            volumeBoostLabel.textContent = volumeBoostValue.toFixed(1) + 'x';
+        });
+
+        // === УДАЛЕНИЕ ===
+        closeBtn.addEventListener('click', () => {
+            showModal('Удалить файл? Все изменения будут потеряны.', () => {
+                resetAll();
+                addLog('🗑️ Файл удалён', 'info');
+            });
+        });
+
+        // === СБРОС ===
+        resetBtn.addEventListener('click', () => {
+            showModal('Сбросить все изменения?', () => {
+                const player = window.mediaPlayer;
+                if (player && duration) {
+                    trimStart = 0;
+                    trimEnd = duration;
+                    trimStartInput.value = '00:00';
+                    trimEndInput.value = formatTime(duration);
+                    volumeBoost.value = 1;
+                    volumeBoostLabel.textContent = '1.0x';
+                    volumeBoostValue = 1;
+                    updateTimeline();
+                    addLog('🔄 Изменения сброшены', 'info');
+                }
+            });
+        });
+
+        function resetAll() {
+            if (currentFileUrl) URL.revokeObjectURL(currentFileUrl);
+            currentFile = null;
+            currentFileUrl = null;
+            window.mediaPlayer = null;
+            duration = 0;
+            trimStart = 0;
+            trimEnd = 0;
+            playerWrapper.classList.remove('visible');
+            settingsRow.classList.remove('visible');
+            fileBar.classList.remove('visible');
+            log.classList.remove('visible');
+            log.innerHTML = '';
+            fileInput.value = '';
+            progressSection.classList.remove('visible');
+            trimBtn.disabled = true;
+            applyVolumeBtn.disabled = true;
+            videoToAudioBtn.disabled = true;
+        }
+
+        // === ОБРАБОТКА (обрезка, громкость, видео→аудио) ===
+        async function processMedia(start, end, volume, extractAudio = false) {
+            return new Promise((resolve, reject) => {
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(currentFile);
+                video.muted = true;
+                video.crossOrigin = 'anonymous';
+
+                video.onloadedmetadata = () => {
+                    try {
+                        const dur = video.duration;
+                        const s = Math.max(0, start);
+                        const e = Math.min(dur, end || dur);
+                        const size = parseInt(previewSize.value);
+                        const isVideo = currentFile.type.startsWith('video/');
+                        const width = isVideo ? Math.min(video.videoWidth || 640, size) : 640;
+                        const height = isVideo ? Math.min(video.videoHeight || 360, Math.round(size * 0.5625)) : 100;
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height || 100;
+
+                        const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                        const stream = video.captureStream();
+                        const source = audioCtx.createMediaStreamSource(stream);
+                        const gain = audioCtx.createGain();
+                        gain.gain.value = volume;
+
+                        const dest = audioCtx.createMediaStreamDestination();
+                        source.connect(gain);
+                        gain.connect(dest);
+
+                        const combined = new MediaStream();
+                        if (!extractAudio) {
+                            const videoTrack = stream.getVideoTracks()[0];
+                            if (videoTrack) combined.addTrack(videoTrack);
+                        }
+                        dest.stream.getTracks().forEach(t => combined.addTrack(t));
+
+                        const chunks = [];
+                        const mimeType = extractAudio ? 'audio/webm' : 'video/webm;codecs=vp9,opus';
+                        const recorder = new MediaRecorder(combined, { mimeType });
+
+                        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+                        recorder.onstop = () => {
+                            const blob = new Blob(chunks, { type: extractAudio ? 'audio/webm' : 'video/webm' });
+                            resolve(blob);
+                            video.remove();
+                            URL.revokeObjectURL(video.src);
+                        };
+
+                        recorder.start(100);
+                        video.currentTime = s;
+                        video.play();
+
+                        let lastProgress = 0;
+                        const checkInterval = setInterval(() => {
+                            const current = video.currentTime;
+                            const total = e - s;
+                            const progress = total > 0 ? ((current - s) / total) * 100 : 0;
+                            if (Math.floor(progress) > lastProgress) {
+                                lastProgress = Math.floor(progress);
+                                updateProgress(lastProgress);
+                            }
+                            if (current >= e) {
+                                video.pause();
+                                clearInterval(checkInterval);
+                                recorder.stop();
+                                updateProgress(100);
+                            }
+                        }, 100);
+
+                        if (!extractAudio && isVideo) {
+                            const renderCanvas = document.createElement('canvas');
+                            renderCanvas.width = width;
+                            renderCanvas.height = height;
+                            document.body.appendChild(renderCanvas);
+                            renderCanvas.style.display = 'none';
+                            const renderInterval = setInterval(() => {
+                                if (!video.paused) {
+                                    const ctx2 = renderCanvas.getContext('2d');
+                                    ctx2.drawImage(video, 0, 0, width, height);
+                                }
+                            }, 33);
+                        }
+
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+
+                video.onerror = () => {
+                    reject(new Error('Ошибка загрузки видео'));
+                    video.remove();
+                    URL.revokeObjectURL(video.src);
+                };
+            });
+        }
+
+        function downloadFile(blob, suffix, ext = 'webm') {
+            const baseName = currentFile.name.replace(/\.[^/.]+$/, '');
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${baseName}${suffix}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }
+
+        function showProgress(show) {
+            progressSection.classList.toggle('visible', show);
+            if (!show) { progressFillBar.style.width = '0%';
+                progressText.textContent = 'Обработка...'; }
+        }
+
+        function updateProgress(value) {
+            progressFillBar.style.width = Math.min(value, 100) + '%';
+            progressText.textContent = `Обработка... ${Math.min(value, 100)}%`;
+        }
+
+        // === КНОПКИ ДЕЙСТВИЙ ===
+        async function handleAction(action) {
+            if (!currentFile || isProcessing) {
+                addLog('⚠️ Сначала загрузи файл', 'warning');
+                return;
+            }
+            const start = trimStart;
+            const end = trimEnd;
+            if (end - start <= 0.5) {
+                addLog('❌ Выбери фрагмент длиннее 0.5 секунд', 'error');
                 return;
             }
 
             isProcessing = true;
             const isVideo = currentFile.type.startsWith('video/');
-
-            addLog(`🔄 Начинаю обработку... (${action})`, 'info');
+            const actionNames = {
+                trim: '✂️ Обрезка',
+                volume: '🔊 Увеличение громкости',
+                audio: '🎵 Конвертация в аудио'
+            };
+            addLog(`${actionNames[action]}: ${formatTime(start)} — ${formatTime(end)}`, 'info');
             showProgress(true);
 
             try {
-                const result = await new Promise((resolve, reject) => {
-                    const video = document.createElement('video');
-                    video.src = URL.createObjectURL(currentFile);
-                    video.muted = true;
-                    video.crossOrigin = 'anonymous';
-
-                    video.onloadedmetadata = () => {
-                        try {
-                            const duration = video.duration;
-                            const actualStart = action === 'trim' ? start : 0;
-                            const actualEnd = action === 'trim' ? end : duration;
-
-                            // Создаём canvas для захвата видео
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-
-                            const size = parseInt(previewSize.value);
-                            const width = isVideo ? Math.min(video.videoWidth || 640, size) : 640;
-                            const height = isVideo ? Math.min(video.videoHeight || 360, Math.round(size * 0.5625)) : 100;
-
-                            canvas.width = width;
-                            canvas.height = height || 100;
-
-                            // Аудио контекст
-                            const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-                            const stream = video.captureStream();
-                            const source = audioCtx.createMediaStreamSource(stream);
-                            const gain = audioCtx.createGain();
-                            gain.gain.value = volume;
-
-                            const dest = audioCtx.createMediaStreamDestination();
-                            source.connect(gain);
-                            gain.connect(dest);
-
-                            // Собираем поток
-                            const combined = new MediaStream();
-                            const videoTrack = stream.getVideoTracks()[0];
-                            if (videoTrack) combined.addTrack(videoTrack);
-                            dest.stream.getTracks().forEach(t => combined.addTrack(t));
-
-                            const chunks = [];
-                            const recorder = new MediaRecorder(combined, {
-                                mimeType: 'video/webm;codecs=vp9,opus'
-                            });
-
-                            recorder.ondataavailable = (e) => {
-                                if (e.data.size > 0) chunks.push(e.data);
-                            };
-
-                            recorder.onstop = () => {
-                                const blob = new Blob(chunks, { type: 'video/webm' });
-                                resolve(blob);
-                                video.remove();
-                                URL.revokeObjectURL(video.src);
-                            };
-
-                            recorder.start(100);
-                            video.currentTime = actualStart;
-                            video.play();
-
-                            let lastProgress = 0;
-                            const checkInterval = setInterval(() => {
-                                const current = video.currentTime;
-                                const total = actualEnd - actualStart;
-                                const progress = total > 0 ? ((current - actualStart) / total) * 100 : 0;
-
-                                if (Math.floor(progress) > lastProgress) {
-                                    lastProgress = Math.floor(progress);
-                                    updateProgress(lastProgress);
-                                }
-
-                                if (current >= actualEnd) {
-                                    video.pause();
-                                    clearInterval(checkInterval);
-                                    recorder.stop();
-                                    updateProgress(100);
-                                }
-                            }, 100);
-
-                            // Рендерим видео на canvas
-                            if (isVideo) {
-                                const renderCanvas = document.createElement('canvas');
-                                renderCanvas.width = width;
-                                renderCanvas.height = height;
-                                document.body.appendChild(renderCanvas);
-                                renderCanvas.style.display = 'none';
-
-                                const renderInterval = setInterval(() => {
-                                    if (!video.paused) {
-                                        const ctx2 = renderCanvas.getContext('2d');
-                                        ctx2.drawImage(video, 0, 0, width, height);
-                                    }
-                                }, 33);
-                            }
-
-                        } catch (err) {
-                            reject(err);
-                        }
-                    };
-
-                    video.onerror = () => {
-                        reject(new Error('Ошибка загрузки видео'));
-                        video.remove();
-                        URL.revokeObjectURL(video.src);
-                    };
-                });
-
-                // Скачиваем результат
-                const ext = currentFile.name.split('.').pop();
-                const baseName = currentFile.name.replace(/\.[^/.]+$/, '');
-                const suffix = action === 'trim' ? '_trimmed' : '_boosted';
-                const url = URL.createObjectURL(result);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${baseName}${suffix}.webm`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-                addLog(`✅ Готово! Файл скачан.`, 'success');
-
+                let result;
+                if (action === 'audio') {
+                    result = await processMedia(start, end, volumeBoostValue, true);
+                    downloadFile(result, '_audio', 'mp3');
+                } else {
+                    result = await processMedia(start, end, volumeBoostValue, false);
+                    downloadFile(result, action === 'trim' ? '_trimmed' : '_boosted');
+                }
+                addLog(`✅ ${actionNames[action]} завершена!`, 'success');
             } catch (err) {
                 addLog(`❌ Ошибка: ${err.message}`, 'error');
                 console.error(err);
             }
-
             showProgress(false);
             isProcessing = false;
         }
 
-        // === ПРОГРЕСС ===
-        function showProgress(show) {
-            progressSection.classList.toggle('visible', show);
-            if (!show) {
-                progressFill.style.width = '0%';
-                progressText.textContent = 'Обработка...';
-            }
-        }
+        trimBtn.addEventListener('click', () => handleAction('trim'));
+        applyVolumeBtn.addEventListener('click', () => handleAction('volume'));
+        videoToAudioBtn.addEventListener('click', () => handleAction('audio'));
 
-        function updateProgress(value) {
-            progressFill.style.width = Math.min(value, 100) + '%';
-            progressText.textContent = `Обработка... ${Math.min(value, 100)}%`;
-        }
-
-        // === ПРЕВЬЮ ===
-        function previewTrim() {
-            const player = window.mediaPlayer;
-            if (!player) {
-                addLog('⚠️ Нет загруженного файла', 'warning');
-                return;
-            }
-            const start = parseFloat(startTime.value);
-            const end = parseFloat(endTime.value);
-            if (end - start <= 0) {
-                addLog('❌ Конец должен быть больше начала', 'error');
-                return;
-            }
-            player.currentTime = start;
-            player.play();
-            const check = setInterval(() => {
-                if (player.currentTime >= end) {
-                    player.pause();
-                    clearInterval(check);
-                    addLog(`👁️ Превью завершено (${start.toFixed(1)}с — ${end.toFixed(1)}с)`, 'info');
-                }
-            }, 100);
-            addLog(`👁️ Превью: ${start.toFixed(1)}с — ${end.toFixed(1)}с`, 'info');
-        }
-
-        // === СБРОС ===
-        function resetAll() {
-            if (currentFileUrl) {
-                URL.revokeObjectURL(currentFileUrl);
-            }
-            currentFile = null;
-            currentFileUrl = null;
-            window.mediaPlayer = null;
-            playerSection.classList.remove('visible');
-            controlsSection.classList.remove('visible');
-            log.classList.remove('visible');
-            log.innerHTML = '';
-            fileInput.value = '';
-            progressSection.classList.remove('visible');
-            addLog('🔄 Сброшено', 'info');
-        }
-
-        // === ОБРАБОТЧИКИ ===
+        // === ЗАГРУЗКА ФАЙЛА ЧЕРЕЗ UI ===
         uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.style.borderColor = '#667eea';
-        });
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.style.borderColor = 'rgba(255,255,255,0.2)';
-        });
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault();
+            uploadArea.style.borderColor = '#667eea'; });
+        uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'rgba(255,255,255,0.2)'; });
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.style.borderColor = 'rgba(255,255,255,0.2)';
-            if (e.dataTransfer.files.length) {
-                loadFile(e.dataTransfer.files[0]);
-            }
+            if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
         });
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length) {
-                loadFile(fileInput.files[0]);
-            }
-        });
+        fileInput.addEventListener('change', () => { if (fileInput.files.length) loadFile(fileInput.files[0]); });
 
-        // Слайдеры
-        startTime.addEventListener('input', () => {
-            startValue.textContent = parseFloat(startTime.value).toFixed(1);
-        });
-        endTime.addEventListener('input', () => {
-            endValue.textContent = parseFloat(endTime.value).toFixed(1);
-        });
-        volumeBoost.addEventListener('input', () => {
-            volumeValue.textContent = parseFloat(volumeBoost.value).toFixed(1) + 'x';
-        });
-
-        // Кнопки
-        trimBtn.addEventListener('click', processMedia);
-        volumeBtn.addEventListener('click', processMedia);
-        previewBtn.addEventListener('click', previewTrim);
-        resetBtn.addEventListener('click', resetAll);
-
-        // Проверка поддержки
-        if (!window.MediaRecorder) {
-            addLog('❌ Ваш браузер не поддерживает MediaRecorder. Используйте Chrome или Edge.', 'error');
-        } else {
-            addLog('🎬 Редактор загружен! Загрузи видео или аудио.', 'info');
-        }
+        addLog('🎬 Редактор загружен! Загрузи файл для начала работы.', 'info');
     </script>
 </body>
 </html>
