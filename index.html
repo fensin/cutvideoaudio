@@ -7,6 +7,10 @@
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
 
+    <!-- FFmpeg.wasm -->
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/ffmpeg.min.js">
+    </script>
+
     <style>
         * {
             margin: 0;
@@ -715,6 +719,37 @@
             flex: 1;
         }
 
+        .ffmpeg-status {
+            display: none;
+            margin: 8px 0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            font-size: 13px;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ffmpeg-status.visible {
+            display: flex;
+        }
+
+        .ffmpeg-status .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #fbbf24;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .footer {
             text-align: center;
             margin-top: 32px;
@@ -740,7 +775,7 @@
 <body>
 
     <div class="version" id="versionDisplay">
-        <span class="v">v</span>1.8.4
+        <span class="v">v</span>1.9.0
     </div>
 
     <div class="container">
@@ -766,6 +801,12 @@
         </div>
 
         <div class="file-list" id="fileList"></div>
+
+        <!-- FFmpeg статус -->
+        <div class="ffmpeg-status" id="ffmpegStatus">
+            <div class="spinner"></div>
+            <span>Загрузка FFmpeg.wasm...</span>
+        </div>
 
         <div class="player-wrapper" id="playerWrapper">
             <div id="playerContainer">
@@ -795,6 +836,7 @@
             <div class="player-controls">
                 <button class="btn-icon" id="playBtn" title="Воспроизвести/Пауза">▶</button>
                 <button class="btn-icon" id="restartBtn" title="В начало">⏮</button>
+                <button class="btn-icon" id="previewBtn" title="Превью обрезки">👁️</button>
                 <div class="volume-slider">
                     <span style="color:rgba(255,255,255,0.4);font-size:14px;">🔊</span>
                     <input type="range" id="gainSlider" min="0" max="300" value="100">
@@ -825,7 +867,7 @@
         </div>
 
         <div class="actions">
-            <button class="btn btn-success" id="trimBtn" disabled>✂️ Обрезать</button>
+            <button class="btn btn-success" id="trimBtn" disabled>✂️ Обрезать (FFmpeg)</button>
             <button class="btn btn-purple" id="videoToAudioBtn" disabled>🎵 Видео → Аудио</button>
             <button class="btn btn-warning" id="batchVolumeBtn" disabled>🔊 Изменить громкость всех</button>
             <button class="btn btn-outline" id="resetBtn">🔄 Сбросить</button>
@@ -859,9 +901,63 @@
         //  ВЕРСИЯ
         // ============================================================
 
-        const VERSION = '1.8.4';
+        const VERSION = '1.9.0';
         document.getElementById('versionDisplay').innerHTML = `<span class="v">v</span>${VERSION}`;
         console.log(`📌 Версия: ${VERSION}`);
+
+        // ============================================================
+        //  FFMPEG.WASM
+        // ============================================================
+
+        let ffmpeg = null;
+        let ffmpegLoaded = false;
+        let ffmpegLoading = false;
+
+        async function loadFFmpeg() {
+            if (ffmpegLoaded) return ffmpeg;
+            if (ffmpegLoading) {
+                await new Promise(resolve => {
+                    const check = setInterval(() => {
+                        if (ffmpegLoaded) { clearInterval(check);
+                            resolve(); }
+                    }, 100);
+                });
+                return ffmpeg;
+            }
+
+            ffmpegLoading = true;
+            const statusEl = document.getElementById('ffmpegStatus');
+            statusEl.classList.add('visible');
+            statusEl.querySelector('span').textContent = 'Загрузка FFmpeg.wasm...';
+
+            try {
+                const { createFFmpeg, fetchFile } = FFmpeg;
+                ffmpeg = createFFmpeg({
+                    log: false,
+                    corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+                });
+
+                ffmpeg.setProgress(({ ratio }) => {
+                    const percent = Math.round(ratio * 100);
+                    statusEl.querySelector('span').textContent = `Загрузка FFmpeg: ${percent}%`;
+                });
+
+                await ffmpeg.load();
+                ffmpegLoaded = true;
+                statusEl.querySelector('span').textContent = '✅ FFmpeg загружен!';
+                setTimeout(() => statusEl.classList.remove('visible'), 2000);
+                addLog('✅ FFmpeg.wasm загружен', 'success');
+                return ffmpeg;
+            } catch (err) {
+                console.error('FFmpeg load error:', err);
+                statusEl.querySelector('span').textContent = '❌ Ошибка загрузки FFmpeg';
+                addLog('❌ Ошибка загрузки FFmpeg: ' + err.message, 'error');
+                ffmpegLoaded = false;
+                return null;
+            } finally {
+                ffmpegLoading = false;
+            }
+        }
 
         // ============================================================
         //  ПОЛНАЯ ЛОГИКА
@@ -891,6 +987,7 @@
         const durationDisplay = document.getElementById('durationDisplay');
         const playBtn = document.getElementById('playBtn');
         const restartBtn = document.getElementById('restartBtn');
+        const previewBtn = document.getElementById('previewBtn');
         const gainSlider = document.getElementById('gainSlider');
         const gainLabel = document.getElementById('gainLabel');
         const muteBtn = document.getElementById('muteBtn');
@@ -930,6 +1027,7 @@
         let audioData = null;
         let gainNode = null;
         let mediaElementSource = null;
+        let previewInterval = null;
 
         // === ЛОГГЕР ===
         function addLog(message, type = 'info') {
@@ -1073,7 +1171,7 @@
             });
         }
 
-        // === УПРАВЛЕНИЕ ГРОМКОСТЬЮ ЧЕРЕЗ WEB AUDIO API ===
+        // === УПРАВЛЕНИЕ ГРОМКОСТЬЮ ===
         function setupAudioGain() {
             const player = window.mediaPlayer;
             if (!player) return;
@@ -1110,7 +1208,7 @@
                 addLog(`🔊 Громкость: ${currentGain.toFixed(1)}x`, 'info');
 
             } catch (err) {
-                console.warn('Web Audio API не поддерживается, используем стандартную громкость:', err);
+                console.warn('Web Audio API не поддерживается:', err);
                 player.volume = Math.min(1, currentGain);
                 gainLabel.textContent = currentGain.toFixed(1) + 'x';
                 muteBtn.textContent = currentGain === 0 ? '🔈' : '🔊';
@@ -1135,6 +1233,43 @@
                 muteBtn.textContent = gain === 0 ? '🔈' : '🔊';
                 drawWaveform(gain);
             }
+        }
+
+        // === ПРЕВЬЮ В РАМКАХ ОБРЕЗКИ ===
+        function playPreview() {
+            const player = window.mediaPlayer;
+            if (!player || !duration) {
+                addLog('⚠️ Сначала загрузи файл', 'warning');
+                return;
+            }
+
+            if (trimEnd - trimStart < 0.5) {
+                addLog('❌ Выбери фрагмент длиннее 0.5 секунд', 'error');
+                return;
+            }
+
+            // Останавливаем предыдущее превью
+            if (previewInterval) {
+                clearInterval(previewInterval);
+                previewInterval = null;
+            }
+
+            player.currentTime = trimStart;
+            player.play();
+
+            previewInterval = setInterval(() => {
+                if (player.currentTime >= trimEnd || player.paused) {
+                    if (player.currentTime >= trimEnd) {
+                        player.pause();
+                        player.currentTime = trimStart;
+                    }
+                    clearInterval(previewInterval);
+                    previewInterval = null;
+                    addLog(`👁️ Превью завершено: ${formatTime(trimStart)} — ${formatTime(trimEnd)}`, 'info');
+                }
+            }, 50);
+
+            addLog(`👁️ Превью: ${formatTime(trimStart)} — ${formatTime(trimEnd)}`, 'info');
         }
 
         // === ОБНОВЛЕНИЕ СПИСКА ФАЙЛОВ ===
@@ -1189,6 +1324,10 @@
                 currentFileUrl = null;
                 playerWrapper.classList.remove('visible');
                 settingsRow.classList.remove('visible');
+                if (previewInterval) {
+                    clearInterval(previewInterval);
+                    previewInterval = null;
+                }
             }
             files.splice(index, 1);
             if (files.length === 0) {
@@ -1264,6 +1403,15 @@
             player.addEventListener('pause', () => { isPlaying = false;
                 playBtn.textContent = '▶'; });
 
+            player.addEventListener('ended', () => {
+                // Если это было превью — возвращаем в начало обрезки
+                if (previewInterval) {
+                    clearInterval(previewInterval);
+                    previewInterval = null;
+                    player.currentTime = trimStart;
+                }
+            });
+
             applyGain(currentGain);
             updateFileList();
         }
@@ -1291,15 +1439,13 @@
             }
         }
 
-        // === ТАЙМЛАЙН (ФИКС ПРАВОЙ МЕТКИ) ===
+        // === ТАЙМЛАЙН ===
         function updateTimeline() {
             if (!duration || !isFinite(duration)) return;
 
-            // Ограничиваем значения в пределах длительности
             const clampedStart = Math.max(0, Math.min(duration, trimStart));
             const clampedEnd = Math.max(0, Math.min(duration, trimEnd));
 
-            // Если начальная точка >= конечной — корректируем
             if (clampedStart >= clampedEnd) {
                 if (clampedStart >= duration) {
                     trimStart = duration - 1;
@@ -1312,7 +1458,6 @@
             const startPercent = (trimStart / duration) * 100;
             const endPercent = (trimEnd / duration) * 100;
 
-            // Принудительно ограничиваем проценты
             const clampedStartPct = Math.max(0, Math.min(100, startPercent));
             const clampedEndPct = Math.max(0, Math.min(100, endPercent));
             const width = Math.max(0.5, clampedEndPct - clampedStartPct);
@@ -1390,15 +1535,27 @@
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume();
             }
+            // Если было превью и мы на границе — сбрасываем
+            if (previewInterval) {
+                clearInterval(previewInterval);
+                previewInterval = null;
+            }
             isPlaying ? player.pause() : player.play();
         });
 
         restartBtn.addEventListener('click', () => {
             const player = window.mediaPlayer;
             if (!player) return;
+            if (previewInterval) {
+                clearInterval(previewInterval);
+                previewInterval = null;
+            }
             player.currentTime = trimStart;
             if (!isPlaying) player.play();
         });
+
+        // === ПРЕВЬЮ ===
+        previewBtn.addEventListener('click', playPreview);
 
         // === СБРОС ===
         function resetAll() {
@@ -1409,6 +1566,10 @@
             trimStart = 0;
             trimEnd = 0;
             audioData = null;
+            if (previewInterval) {
+                clearInterval(previewInterval);
+                previewInterval = null;
+            }
             if (mediaElementSource) {
                 try { mediaElementSource.disconnect(); } catch (e) {}
                 mediaElementSource = null;
@@ -1450,8 +1611,69 @@
             });
         });
 
-        // === ОБРАБОТКА ===
+        // === ОБРАБОТКА С FFMPEG ===
+        async function processWithFFmpeg(file, start, end, gain, extractAudio = false) {
+            const ff = await loadFFmpeg();
+            if (!ff) {
+                throw new Error('FFmpeg не загружен');
+            }
+
+            const inputName = 'input.' + (file.type.startsWith('video/') ? 'mp4' : 'mp3');
+            const outputName = extractAudio ? 'output.mp3' : 'output.mp4';
+
+            // Загружаем файл в FFmpeg
+            const data = await fetch(URL.createObjectURL(file.file || file)).then(r => r.arrayBuffer());
+            ff.FS('writeFile', inputName, new Uint8Array(data));
+
+            // Собираем команду
+            const duration = end - start;
+            const gainFilter = gain !== 1 ? `volume=${gain}` : '';
+            let cmd = [];
+
+            if (extractAudio) {
+                cmd = ['-i', inputName, '-ss', String(start), '-t', String(duration)];
+                if (gainFilter) cmd.push('-af', gainFilter);
+                cmd.push('-acodec', 'libmp3lame', '-ab', '192k', outputName);
+            } else {
+                cmd = ['-i', inputName, '-ss', String(start), '-t', String(duration)];
+                if (gainFilter) cmd.push('-af', gainFilter);
+                cmd.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '128k', outputName);
+            }
+
+            addLog(`🎬 FFmpeg команда: ${cmd.join(' ')}`, 'info');
+
+            try {
+                await ff.run(...cmd);
+            } catch (err) {
+                // Пробуем без сложных кодеков
+                addLog('🔄 Пробуем упрощённую команду...', 'warning');
+                const simpleCmd = ['-i', inputName, '-ss', String(start), '-t', String(duration), outputName];
+                await ff.run(...simpleCmd);
+            }
+
+            // Читаем результат
+            const dataOut = ff.FS('readFile', outputName);
+            const blob = new Blob([dataOut], { type: extractAudio ? 'audio/mpeg' : 'video/mp4' });
+
+            // Очищаем
+            ff.FS('unlink', inputName);
+            ff.FS('unlink', outputName);
+
+            return blob;
+        }
+
+        // === ОБРАБОТКА (обычная) ===
         async function processSingleFile(file, start, end, gain, extractAudio = false) {
+            // Пробуем FFmpeg для видео
+            if (file.type.startsWith('video/') && !extractAudio) {
+                try {
+                    return await processWithFFmpeg(file, start, end, gain, false);
+                } catch (err) {
+                    addLog(`⚠️ FFmpeg не сработал, пробуем встроенный метод: ${err.message}`, 'warning');
+                }
+            }
+
+            // Fallback: встроенный метод
             return new Promise((resolve, reject) => {
                 const video = document.createElement('video');
                 video.src = URL.createObjectURL(file.file || file);
@@ -1713,7 +1935,7 @@
 
             isProcessing = true;
             const actionNames = {
-                trim: '✂️ Обрезка',
+                trim: '✂️ Обрезка (FFmpeg)',
                 audio: '🎵 Конвертация в аудио',
                 batch: '🔊 Изменение громкости'
             };
@@ -1734,9 +1956,15 @@
                     let suffix = '';
 
                     if (action === 'audio') {
-                        result = await processSingleFile(f, start, end, gain, true);
-                        ext = result.type === 'audio/wav' ? 'wav' : result.type === 'audio/mpeg' ? 'mp3' : 'webm';
-                        suffix = '_audio';
+                        if (f.type.startsWith('video/')) {
+                            result = await processWithFFmpeg(f, start, end, gain, true);
+                            ext = 'mp3';
+                            suffix = '_audio';
+                        } else {
+                            result = await processSingleFile(f, start, end, gain, true);
+                            ext = result.type === 'audio/wav' ? 'wav' : result.type === 'audio/mpeg' ? 'mp3' : 'webm';
+                            suffix = '_audio';
+                        }
                     } else if (action === 'trim') {
                         result = await processSingleFile(f, start, end, gain, false);
                         ext = result.type === 'video/mp4' ? 'mp4' : 'webm';
@@ -1765,28 +1993,28 @@
         }
 
         // === КНОПКИ ===
-        trimBtn.addEventListener('click', () => {
+        trimBtn.addEventListener('click', async () => {
             if (files.length !== 1) {
                 addLog('⚠️ Обрезка доступна только для одного файла', 'warning');
                 return;
             }
-            handleAction('trim', [files[currentFileIndex]]);
+            await handleAction('trim', [files[currentFileIndex]]);
         });
 
-        videoToAudioBtn.addEventListener('click', () => {
+        videoToAudioBtn.addEventListener('click', async () => {
             if (files.length !== 1) {
                 addLog('⚠️ Конвертация доступна только для одного файла', 'warning');
                 return;
             }
-            handleAction('audio', [files[currentFileIndex]]);
+            await handleAction('audio', [files[currentFileIndex]]);
         });
 
-        batchVolumeBtn.addEventListener('click', () => {
+        batchVolumeBtn.addEventListener('click', async () => {
             if (files.length < 2) {
                 addLog('⚠️ Нужно загрузить минимум 2 файла', 'warning');
                 return;
             }
-            handleAction('batch', files);
+            await handleAction('batch', files);
         });
 
         // === ГРОМКОСТЬ ===
@@ -1828,6 +2056,14 @@
         window.addEventListener('resize', () => {
             drawWaveform(currentGain);
         });
+
+        // === ПРЕДЗАГРУЗКА FFMPEG ===
+        // Загружаем FFmpeg в фоне при первом взаимодействии
+        document.addEventListener('click', () => {
+            if (!ffmpegLoaded && !ffmpegLoading) {
+                loadFFmpeg();
+            }
+        }, { once: true });
 
         addLog('🎬 Редактор загружен! Загрузи файлы для начала работы.', 'info');
         updateFileList();
