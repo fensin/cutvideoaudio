@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🎬 Медиа-редактор</title>
+
+    <!-- ФАВИКОНКА (эмодзи как иконка) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+
     <style>
         * {
             margin: 0;
@@ -168,12 +172,23 @@
 
         .timeline-container {
             position: relative;
-            height: 40px;
+            height: 48px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             cursor: pointer;
             overflow: hidden;
             user-select: none;
+        }
+
+        /* Увеличиваем зону клика */
+        .timeline-container .click-zone {
+            position: absolute;
+            top: -12px;
+            left: 0;
+            right: 0;
+            bottom: -12px;
+            z-index: 1;
+            cursor: pointer;
         }
 
         .timeline-container .progress-fill {
@@ -185,6 +200,7 @@
             border-radius: 8px;
             pointer-events: none;
             transition: width 0.05s linear;
+            z-index: 2;
         }
 
         .timeline-container .trim-region {
@@ -195,22 +211,36 @@
             border: 2px solid #667eea;
             border-radius: 8px;
             pointer-events: none;
+            z-index: 3;
         }
 
         .timeline-container .trim-handle {
             position: absolute;
-            top: -4px;
-            width: 12px;
-            height: calc(100% + 8px);
-            background: rgba(102, 126, 234, 0.8);
+            top: -8px;
+            width: 16px;
+            height: calc(100% + 16px);
+            background: rgba(102, 126, 234, 0.9);
             border-radius: 4px;
             cursor: ew-resize;
             pointer-events: all;
             transition: background 0.2s;
+            z-index: 5;
         }
 
         .timeline-container .trim-handle:hover {
             background: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .timeline-container .trim-handle::after {
+            content: '⋮';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: bold;
         }
 
         .timeline-container .trim-handle.left {
@@ -225,10 +255,14 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.7);
             font-size: 11px;
             font-family: monospace;
             pointer-events: none;
+            z-index: 4;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
         }
 
         .timeline-container .time-label.start {
@@ -247,6 +281,8 @@
             background: #fff;
             pointer-events: none;
             transition: left 0.05s linear;
+            z-index: 6;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
         .timeline-info {
@@ -372,6 +408,13 @@
             width: 100px;
         }
 
+        .settings-row .setting .boost-label {
+            min-width: 35px;
+            text-align: center;
+            color: #fff;
+            font-weight: 600;
+        }
+
         .actions {
             display: flex;
             gap: 12px;
@@ -405,15 +448,6 @@
             transform: none;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-        }
-
         .btn-success {
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #fff;
@@ -423,22 +457,13 @@
             box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
         }
 
-        .btn-danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
+        .btn-purple {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             color: #fff;
         }
 
-        .btn-danger:hover:not(:disabled) {
-            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #fff;
-        }
-
-        .btn-warning:hover:not(:disabled) {
-            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+        .btn-purple:hover:not(:disabled) {
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
         }
 
         .btn-outline {
@@ -452,13 +477,13 @@
             color: #fff;
         }
 
-        .btn-purple {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: #fff;
         }
 
-        .btn-purple:hover:not(:disabled) {
-            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+        .btn-danger:hover:not(:disabled) {
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
         }
 
         .progress-section {
@@ -617,6 +642,7 @@
 
             <div class="timeline-wrapper">
                 <div class="timeline-container" id="timelineContainer">
+                    <div class="click-zone" id="clickZone"></div>
                     <div class="progress-fill" id="progressFill"></div>
                     <div class="trim-region" id="trimRegion"></div>
                     <div class="trim-handle left" id="trimHandleLeft"></div>
@@ -653,9 +679,9 @@
                 </select>
             </div>
             <div class="setting">
-                <span>🎚️ Громкость</span>
+                <span>🔊 Усиление</span>
                 <input type="range" id="volumeBoost" min="1" max="5" value="1" step="0.1">
-                <span id="volumeBoostLabel" style="min-width:35px;text-align:center;color:#fff;">1.0x</span>
+                <span class="boost-label" id="volumeBoostLabel">1.0x</span>
             </div>
             <div class="setting">
                 <span>⏱️ Начало</span>
@@ -669,9 +695,8 @@
         </div>
 
         <div class="actions">
-            <button class="btn btn-success" id="trimBtn">✂️ Обрезать</button>
-            <button class="btn btn-warning" id="applyVolumeBtn">🔊 Применить громкость</button>
-            <button class="btn btn-purple" id="videoToAudioBtn">🎵 Видео → Аудио</button>
+            <button class="btn btn-success" id="trimBtn" disabled>✂️ Обрезать</button>
+            <button class="btn btn-purple" id="videoToAudioBtn" disabled>🎵 Видео → Аудио</button>
             <button class="btn btn-outline" id="resetBtn">🔄 Сбросить</button>
         </div>
 
@@ -714,6 +739,7 @@
         const playerContainer = document.getElementById('playerContainer');
         const mediaPlayer = document.getElementById('mediaPlayer');
         const timelineContainer = document.getElementById('timelineContainer');
+        const clickZone = document.getElementById('clickZone');
         const progressFill = document.getElementById('progressFill');
         const trimRegion = document.getElementById('trimRegion');
         const trimHandleLeft = document.getElementById('trimHandleLeft');
@@ -736,7 +762,6 @@
         const trimEndInput = document.getElementById('trimEndInput');
         const applyTimeBtn = document.getElementById('applyTimeBtn');
         const trimBtn = document.getElementById('trimBtn');
-        const applyVolumeBtn = document.getElementById('applyVolumeBtn');
         const videoToAudioBtn = document.getElementById('videoToAudioBtn');
         const resetBtn = document.getElementById('resetBtn');
         const progressSection = document.getElementById('progressSection');
@@ -838,7 +863,6 @@
                     durationDisplay.textContent = formatTime(duration);
                     trimEndInput.value = formatTime(duration);
                     trimBtn.disabled = false;
-                    applyVolumeBtn.disabled = false;
                     videoToAudioBtn.disabled = false;
                     addLog(`📊 Длительность: ${formatTime(duration)}`, 'info');
                 }
@@ -910,7 +934,8 @@
         trimHandleLeft.addEventListener('mousedown', (e) => initDrag(e, 'left'));
         trimHandleRight.addEventListener('mousedown', (e) => initDrag(e, 'right'));
 
-        timelineContainer.addEventListener('click', (e) => {
+        // Клик по таймлайну — перемещение
+        clickZone.addEventListener('click', (e) => {
             if (isDragging) return;
             const rect = timelineContainer.getBoundingClientRect();
             const time = ((e.clientX - rect.left) / rect.width) * duration;
@@ -946,6 +971,7 @@
             if (!isPlaying) player.play();
         });
 
+        // Громкость воспроизведения — сразу применяется
         volumeSlider.addEventListener('input', () => {
             const player = window.mediaPlayer;
             if (player) {
@@ -972,6 +998,7 @@
             }
         });
 
+        // Усиление при экспорте — тоже сразу меняет отображение
         volumeBoost.addEventListener('input', () => {
             volumeBoostValue = parseFloat(volumeBoost.value);
             volumeBoostLabel.textContent = volumeBoostValue.toFixed(1) + 'x';
@@ -1019,11 +1046,10 @@
             fileInput.value = '';
             progressSection.classList.remove('visible');
             trimBtn.disabled = true;
-            applyVolumeBtn.disabled = true;
             videoToAudioBtn.disabled = true;
         }
 
-        // === ОБРАБОТКА (обрезка, громкость, видео→аудио) ===
+        // === ОБРАБОТКА ===
         async function processMedia(start, end, volume, extractAudio = false) {
             return new Promise((resolve, reject) => {
                 const video = document.createElement('video');
@@ -1160,10 +1186,8 @@
             }
 
             isProcessing = true;
-            const isVideo = currentFile.type.startsWith('video/');
             const actionNames = {
                 trim: '✂️ Обрезка',
-                volume: '🔊 Увеличение громкости',
                 audio: '🎵 Конвертация в аудио'
             };
             addLog(`${actionNames[action]}: ${formatTime(start)} — ${formatTime(end)}`, 'info');
@@ -1176,7 +1200,7 @@
                     downloadFile(result, '_audio', 'mp3');
                 } else {
                     result = await processMedia(start, end, volumeBoostValue, false);
-                    downloadFile(result, action === 'trim' ? '_trimmed' : '_boosted');
+                    downloadFile(result, '_trimmed');
                 }
                 addLog(`✅ ${actionNames[action]} завершена!`, 'success');
             } catch (err) {
@@ -1188,7 +1212,6 @@
         }
 
         trimBtn.addEventListener('click', () => handleAction('trim'));
-        applyVolumeBtn.addEventListener('click', () => handleAction('volume'));
         videoToAudioBtn.addEventListener('click', () => handleAction('audio'));
 
         // === ЗАГРУЗКА ФАЙЛА ЧЕРЕЗ UI ===
