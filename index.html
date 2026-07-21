@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🎬 Медиа-редактор</title>
 
-    <!-- ФАВИКОНКА (эмодзи как иконка) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
 
     <style>
@@ -180,7 +179,6 @@
             user-select: none;
         }
 
-        /* Увеличиваем зону клика */
         .timeline-container .click-zone {
             position: absolute;
             top: -12px;
@@ -207,7 +205,7 @@
             position: absolute;
             top: 0;
             height: 100%;
-            background: rgba(102, 126, 234, 0.2);
+            background: rgba(102, 126, 234, 0.25);
             border: 2px solid #667eea;
             border-radius: 8px;
             pointer-events: none;
@@ -217,19 +215,21 @@
         .timeline-container .trim-handle {
             position: absolute;
             top: -8px;
-            width: 16px;
+            width: 18px;
             height: calc(100% + 16px);
             background: rgba(102, 126, 234, 0.9);
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: ew-resize;
             pointer-events: all;
-            transition: background 0.2s;
+            transition: background 0.2s, box-shadow 0.2s;
             z-index: 5;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
         .timeline-container .trim-handle:hover {
             background: #667eea;
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 0 25px rgba(102, 126, 234, 0.6);
+            border-color: rgba(255, 255, 255, 0.6);
         }
 
         .timeline-container .trim-handle::after {
@@ -238,31 +238,35 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
             font-weight: bold;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
         }
 
         .timeline-container .trim-handle.left {
             left: 0;
+            border-radius: 8px 0 0 8px;
         }
 
         .timeline-container .trim-handle.right {
             right: 0;
+            border-radius: 0 8px 8px 0;
         }
 
         .timeline-container .time-label {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.8);
             font-size: 11px;
             font-family: monospace;
             pointer-events: none;
             z-index: 4;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 2px 6px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 8px;
             border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .timeline-container .time-label.start {
@@ -326,7 +330,7 @@
         .player-controls .volume-slider {
             flex: 1;
             min-width: 80px;
-            max-width: 150px;
+            max-width: 200px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -342,7 +346,7 @@
         .player-controls .volume-slider .vol-label {
             color: rgba(255, 255, 255, 0.5);
             font-size: 12px;
-            min-width: 30px;
+            min-width: 40px;
             text-align: center;
         }
 
@@ -372,20 +376,27 @@
         }
 
         .settings-row .setting input[type="text"] {
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(102, 126, 234, 0.3);
             border-radius: 8px;
             color: #fff;
-            font-size: 13px;
+            font-size: 15px;
+            font-weight: 600;
             outline: none;
-            width: 80px;
+            width: 90px;
             font-family: monospace;
             text-align: center;
+            transition: border-color 0.3s;
         }
 
         .settings-row .setting input[type="text"]:focus {
             border-color: #667eea;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .settings-row .setting input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.3);
         }
 
         .settings-row .setting select {
@@ -402,17 +413,18 @@
             border-color: #667eea;
         }
 
-        .settings-row .setting input[type="range"] {
-            accent-color: #667eea;
-            cursor: pointer;
-            width: 100px;
-        }
-
         .settings-row .setting .boost-label {
-            min-width: 35px;
+            min-width: 40px;
             text-align: center;
             color: #fff;
             font-weight: 600;
+            font-size: 15px;
+        }
+
+        .settings-row .setting .gain-slider {
+            width: 140px;
+            accent-color: #667eea;
+            cursor: pointer;
         }
 
         .actions {
@@ -608,6 +620,7 @@
             .settings-row { flex-direction: column; }
             .player-controls { flex-wrap: wrap; }
             .player-controls .volume-slider { max-width: unset; }
+            .settings-row .setting .gain-slider { width: 100%; }
         }
     </style>
 </head>
@@ -662,8 +675,8 @@
                 <button class="btn-icon" id="restartBtn" title="В начало">⏮</button>
                 <div class="volume-slider">
                     <span style="color:rgba(255,255,255,0.4);font-size:14px;">🔊</span>
-                    <input type="range" id="volumeSlider" min="0" max="200" value="100">
-                    <span class="vol-label" id="volLabel">100%</span>
+                    <input type="range" id="gainSlider" min="0" max="300" value="100">
+                    <span class="vol-label" id="gainLabel">1.0x</span>
                 </div>
                 <button class="btn-icon" id="muteBtn" title="Выключить звук">🔇</button>
             </div>
@@ -679,18 +692,13 @@
                 </select>
             </div>
             <div class="setting">
-                <span>🔊 Усиление</span>
-                <input type="range" id="volumeBoost" min="1" max="5" value="1" step="0.1">
-                <span class="boost-label" id="volumeBoostLabel">1.0x</span>
-            </div>
-            <div class="setting">
                 <span>⏱️ Начало</span>
                 <input type="text" id="trimStartInput" value="00:00" placeholder="00:00">
             </div>
             <div class="setting">
                 <span>⏱️ Конец</span>
                 <input type="text" id="trimEndInput" value="00:00" placeholder="00:00">
-                <button class="btn-icon" id="applyTimeBtn" style="width:28px;height:28px;font-size:14px;background:rgba(102,126,234,0.2);color:#667eea;border:none;border-radius:50%;cursor:pointer;">✓</button>
+                <button class="btn-icon" id="applyTimeBtn" style="width:32px;height:32px;font-size:16px;background:rgba(102,126,234,0.3);color:#667eea;border:2px solid rgba(102,126,234,0.3);border-radius:50%;cursor:pointer;transition:all 0.3s;">✓</button>
             </div>
         </div>
 
@@ -751,13 +759,11 @@
         const durationDisplay = document.getElementById('durationDisplay');
         const playBtn = document.getElementById('playBtn');
         const restartBtn = document.getElementById('restartBtn');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const volLabel = document.getElementById('volLabel');
+        const gainSlider = document.getElementById('gainSlider');
+        const gainLabel = document.getElementById('gainLabel');
         const muteBtn = document.getElementById('muteBtn');
         const settingsRow = document.getElementById('settingsRow');
         const previewSize = document.getElementById('previewSize');
-        const volumeBoost = document.getElementById('volumeBoost');
-        const volumeBoostLabel = document.getElementById('volumeBoostLabel');
         const trimStartInput = document.getElementById('trimStartInput');
         const trimEndInput = document.getElementById('trimEndInput');
         const applyTimeBtn = document.getElementById('applyTimeBtn');
@@ -782,7 +788,7 @@
         let duration = 0;
         let isDragging = false;
         let dragType = null;
-        let volumeBoostValue = 1;
+        let currentGain = 1;
 
         // === ЛОГГЕР ===
         function addLog(message, type = 'info') {
@@ -881,12 +887,47 @@
             player.addEventListener('pause', () => { isPlaying = false;
                 playBtn.textContent = '▶'; });
 
-            player.volume = volumeSlider.value / 100;
-            volLabel.textContent = Math.round(volumeSlider.value) + '%';
+            // Устанавливаем начальную громкость
+            applyGain(1);
 
             addLog(`✅ Загружен: ${file.name}`, 'success');
             updateTimeline();
         }
+
+        // === УПРАВЛЕНИЕ ГРОМКОСТЬЮ (реальное время) ===
+        function applyGain(gain) {
+            const player = window.mediaPlayer;
+            if (player) {
+                player.volume = Math.min(1, gain);
+                const percent = Math.round(gain * 100);
+                gainLabel.textContent = gain.toFixed(1) + 'x';
+                if (gain === 0) {
+                    muteBtn.textContent = '🔈';
+                } else {
+                    muteBtn.textContent = '🔊';
+                }
+            }
+        }
+
+        gainSlider.addEventListener('input', () => {
+            const val = parseFloat(gainSlider.value);
+            currentGain = val / 100;
+            applyGain(currentGain);
+        });
+
+        muteBtn.addEventListener('click', () => {
+            const player = window.mediaPlayer;
+            if (!player) return;
+            if (player.volume > 0) {
+                gainSlider.value = 0;
+                currentGain = 0;
+                applyGain(0);
+            } else {
+                gainSlider.value = 100;
+                currentGain = 1;
+                applyGain(1);
+            }
+        });
 
         // === ТАЙМЛАЙН ===
         function updateTimeline() {
@@ -934,7 +975,6 @@
         trimHandleLeft.addEventListener('mousedown', (e) => initDrag(e, 'left'));
         trimHandleRight.addEventListener('mousedown', (e) => initDrag(e, 'right'));
 
-        // Клик по таймлайну — перемещение
         clickZone.addEventListener('click', (e) => {
             if (isDragging) return;
             const rect = timelineContainer.getBoundingClientRect();
@@ -943,12 +983,11 @@
             if (player) player.currentTime = Math.max(0, Math.min(time, duration));
         });
 
-        // Таймкоды вручную
         applyTimeBtn.addEventListener('click', () => {
             const start = parseTime(trimStartInput.value);
             const end = parseTime(trimEndInput.value);
             if (!isFinite(start) || !isFinite(end) || start < 0 || end > duration || start >= end) {
-                addLog('❌ Неверный формат времени', 'error');
+                addLog('❌ Неверный формат времени (используй мм:сс)', 'error');
                 return;
             }
             trimStart = start;
@@ -957,7 +996,7 @@
             addLog(`⏱️ Установлено: ${formatTime(start)} — ${formatTime(end)}`, 'info');
         });
 
-        // === УПРАВЛЕНИЕ ===
+        // === УПРАВЛЕНИЕ ВОСПРОИЗВЕДЕНИЕМ ===
         playBtn.addEventListener('click', () => {
             const player = window.mediaPlayer;
             if (!player) return;
@@ -969,39 +1008,6 @@
             if (!player) return;
             player.currentTime = trimStart;
             if (!isPlaying) player.play();
-        });
-
-        // Громкость воспроизведения — сразу применяется
-        volumeSlider.addEventListener('input', () => {
-            const player = window.mediaPlayer;
-            if (player) {
-                const val = volumeSlider.value / 100;
-                player.volume = val;
-                volLabel.textContent = Math.round(volumeSlider.value) + '%';
-                muteBtn.textContent = val === 0 ? '🔈' : '🔊';
-            }
-        });
-
-        muteBtn.addEventListener('click', () => {
-            const player = window.mediaPlayer;
-            if (!player) return;
-            if (player.volume > 0) {
-                player.volume = 0;
-                volumeSlider.value = 0;
-                volLabel.textContent = '0%';
-                muteBtn.textContent = '🔈';
-            } else {
-                player.volume = 1;
-                volumeSlider.value = 100;
-                volLabel.textContent = '100%';
-                muteBtn.textContent = '🔊';
-            }
-        });
-
-        // Усиление при экспорте — тоже сразу меняет отображение
-        volumeBoost.addEventListener('input', () => {
-            volumeBoostValue = parseFloat(volumeBoost.value);
-            volumeBoostLabel.textContent = volumeBoostValue.toFixed(1) + 'x';
         });
 
         // === УДАЛЕНИЕ ===
@@ -1021,9 +1027,9 @@
                     trimEnd = duration;
                     trimStartInput.value = '00:00';
                     trimEndInput.value = formatTime(duration);
-                    volumeBoost.value = 1;
-                    volumeBoostLabel.textContent = '1.0x';
-                    volumeBoostValue = 1;
+                    gainSlider.value = 100;
+                    currentGain = 1;
+                    applyGain(1);
                     updateTimeline();
                     addLog('🔄 Изменения сброшены', 'info');
                 }
@@ -1050,7 +1056,7 @@
         }
 
         // === ОБРАБОТКА ===
-        async function processMedia(start, end, volume, extractAudio = false) {
+        async function processMedia(start, end, gain, extractAudio = false) {
             return new Promise((resolve, reject) => {
                 const video = document.createElement('video');
                 video.src = URL.createObjectURL(currentFile);
@@ -1074,12 +1080,12 @@
                         const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                         const stream = video.captureStream();
                         const source = audioCtx.createMediaStreamSource(stream);
-                        const gain = audioCtx.createGain();
-                        gain.gain.value = volume;
+                        const gainNode = audioCtx.createGain();
+                        gainNode.gain.value = gain;
 
                         const dest = audioCtx.createMediaStreamDestination();
-                        source.connect(gain);
-                        gain.connect(dest);
+                        source.connect(gainNode);
+                        gainNode.connect(dest);
 
                         const combined = new MediaStream();
                         if (!extractAudio) {
@@ -1094,9 +1100,15 @@
 
                         recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
-                        recorder.onstop = () => {
+                        recorder.onstop = async () => {
                             const blob = new Blob(chunks, { type: extractAudio ? 'audio/webm' : 'video/webm' });
-                            resolve(blob);
+                            try {
+                                const convertedBlob = await convertBlob(blob, extractAudio);
+                                resolve(convertedBlob);
+                            } catch (convErr) {
+                                addLog('⚠️ Конвертация не удалась, сохранено в WebM', 'warning');
+                                resolve(blob);
+                            }
                             video.remove();
                             URL.revokeObjectURL(video.src);
                         };
@@ -1149,7 +1161,121 @@
             });
         }
 
-        function downloadFile(blob, suffix, ext = 'webm') {
+        // === КОНВЕРТАЦИЯ ===
+        async function convertBlob(blob, toAudio) {
+            return new Promise((resolve) => {
+                const url = URL.createObjectURL(blob);
+                
+                if (toAudio) {
+                    const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                    fetch(url)
+                        .then(res => res.arrayBuffer())
+                        .then(buffer => audioCtx.decodeAudioData(buffer))
+                        .then(audioBuffer => {
+                            const wavBlob = audioBufferToWav(audioBuffer);
+                            try {
+                                const tempAudioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                                const tempSource = tempAudioCtx.createBufferSource();
+                                tempSource.buffer = audioBuffer;
+                                const dest = tempAudioCtx.createMediaStreamDestination();
+                                tempSource.connect(dest);
+                                tempSource.start();
+                                const recorder = new MediaRecorder(dest.stream, { mimeType: 'audio/mp3' });
+                                const chunks = [];
+                                recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+                                recorder.onstop = () => {
+                                    const mp3Blob = new Blob(chunks, { type: 'audio/mpeg' });
+                                    resolve(mp3Blob.size > 1000 ? mp3Blob : wavBlob);
+                                    URL.revokeObjectURL(url);
+                                };
+                                recorder.start();
+                                setTimeout(() => { recorder.stop();
+                                    tempSource.stop(); }, audioBuffer.duration * 1000 + 100);
+                            } catch (mp3Err) {
+                                resolve(wavBlob);
+                                URL.revokeObjectURL(url);
+                            }
+                        })
+                        .catch(() => { resolve(blob);
+                            URL.revokeObjectURL(url); });
+                } else {
+                    try {
+                        const video = document.createElement('video');
+                        video.src = url;
+                        video.muted = true;
+                        video.crossOrigin = 'anonymous';
+                        video.onloadedmetadata = () => {
+                            try {
+                                const stream = video.captureStream();
+                                const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                                const source = audioCtx.createMediaStreamSource(stream);
+                                const dest = audioCtx.createMediaStreamDestination();
+                                source.connect(dest);
+                                const combined = new MediaStream();
+                                stream.getVideoTracks().forEach(t => combined.addTrack(t));
+                                dest.stream.getTracks().forEach(t => combined.addTrack(t));
+                                const chunks = [];
+                                const recorder = new MediaRecorder(combined, { mimeType: 'video/mp4' });
+                                recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+                                recorder.onstop = () => {
+                                    const mp4Blob = new Blob(chunks, { type: 'video/mp4' });
+                                    resolve(mp4Blob.size > 1000 ? mp4Blob : blob);
+                                    URL.revokeObjectURL(url);
+                                };
+                                recorder.start(100);
+                                video.play();
+                                setTimeout(() => { video.pause();
+                                    recorder.stop(); }, 1000);
+                            } catch (err) { resolve(blob);
+                                URL.revokeObjectURL(url); }
+                        };
+                        video.load();
+                        video.onerror = () => { resolve(blob);
+                            URL.revokeObjectURL(url); };
+                    } catch (err) { resolve(blob);
+                        URL.revokeObjectURL(url); }
+                }
+            });
+        }
+
+        function audioBufferToWav(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const samples = buffer.getChannelData(0);
+            const dataLength = samples.length * 2;
+            const bufferLength = 44 + dataLength;
+            const arrayBuffer = new ArrayBuffer(bufferLength);
+            const view = new DataView(arrayBuffer);
+            
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, bufferLength - 8, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * 2, true);
+            view.setUint16(32, numChannels * 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataLength, true);
+            
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++) {
+                view.setInt16(offset, samples[i] * 0x7FFF, true);
+                offset += 2;
+            }
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        function downloadFile(blob, suffix, ext) {
             const baseName = currentFile.name.replace(/\.[^/.]+$/, '');
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1190,17 +1316,20 @@
                 trim: '✂️ Обрезка',
                 audio: '🎵 Конвертация в аудио'
             };
-            addLog(`${actionNames[action]}: ${formatTime(start)} — ${formatTime(end)}`, 'info');
+            const gain = currentGain;
+            addLog(`${actionNames[action]}: ${formatTime(start)} — ${formatTime(end)} (громкость ${gain.toFixed(1)}x)`, 'info');
             showProgress(true);
 
             try {
                 let result;
                 if (action === 'audio') {
-                    result = await processMedia(start, end, volumeBoostValue, true);
-                    downloadFile(result, '_audio', 'mp3');
+                    result = await processMedia(start, end, gain, true);
+                    const ext = result.type === 'audio/wav' ? 'wav' : result.type === 'audio/mpeg' ? 'mp3' : 'webm';
+                    downloadFile(result, '_audio', ext);
                 } else {
-                    result = await processMedia(start, end, volumeBoostValue, false);
-                    downloadFile(result, '_trimmed');
+                    result = await processMedia(start, end, gain, false);
+                    const ext = result.type === 'video/mp4' ? 'mp4' : 'webm';
+                    downloadFile(result, '_trimmed', ext);
                 }
                 addLog(`✅ ${actionNames[action]} завершена!`, 'success');
             } catch (err) {
@@ -1214,7 +1343,7 @@
         trimBtn.addEventListener('click', () => handleAction('trim'));
         videoToAudioBtn.addEventListener('click', () => handleAction('audio'));
 
-        // === ЗАГРУЗКА ФАЙЛА ЧЕРЕЗ UI ===
+        // === ЗАГРУЗКА ===
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', (e) => { e.preventDefault();
             uploadArea.style.borderColor = '#667eea'; });
