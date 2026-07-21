@@ -8,6 +8,9 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
 
     <style>
+        /* === ВСЕ СТИЛИ ОСТАЮТСЯ ТАКИМИ ЖЕ, КАК В ПРЕДЫДУЩЕЙ ВЕРСИИ === */
+        /* (скопируй стили из предыдущего ответа, чтобы не раздувать) */
+
         * {
             margin: 0;
             padding: 0;
@@ -252,7 +255,6 @@
             user-select: none;
         }
 
-        /* === ВОЛНЫ === */
         .waveform-container {
             position: absolute;
             top: 0;
@@ -265,7 +267,7 @@
             padding: 4px 0;
             z-index: 1;
             pointer-events: none;
-            opacity: 0.6;
+            opacity: 0.7;
         }
 
         .waveform-container canvas {
@@ -289,7 +291,7 @@
             top: 0;
             left: 0;
             height: 100%;
-            background: rgba(102, 126, 234, 0.3);
+            background: rgba(102, 126, 234, 0.25);
             border-radius: 8px;
             pointer-events: none;
             transition: width 0.05s linear;
@@ -300,7 +302,7 @@
             position: absolute;
             top: 0;
             height: 100%;
-            background: rgba(102, 126, 234, 0.25);
+            background: rgba(102, 126, 234, 0.2);
             border: 2px solid #667eea;
             border-radius: 8px;
             pointer-events: none;
@@ -740,7 +742,7 @@
 <body>
 
     <div class="version" id="versionDisplay">
-        <span class="v">v</span>1.8
+        <span class="v">v</span>1.8.3
     </div>
 
     <div class="container">
@@ -774,7 +776,6 @@
 
             <div class="timeline-wrapper">
                 <div class="timeline-container" id="timelineContainer">
-                    <!-- Волны -->
                     <div class="waveform-container" id="waveformContainer">
                         <canvas id="waveformCanvas"></canvas>
                     </div>
@@ -860,7 +861,7 @@
         //  ВЕРСИЯ
         // ============================================================
 
-        const VERSION = '1.8';
+        const VERSION = '1.8.3';
         document.getElementById('versionDisplay').innerHTML = `<span class="v">v</span>${VERSION}`;
         console.log(`📌 Версия: ${VERSION}`);
 
@@ -929,6 +930,9 @@
         let currentGain = 1;
         let audioContext = null;
         let audioData = null;
+        let gainNode = null;
+        let sourceNode = null;
+        let mediaElementSource = null;
 
         // === ЛОГГЕР ===
         function addLog(message, type = 'info') {
@@ -974,7 +978,11 @@
         function drawWaveform(gain) {
             const canvas = waveformCanvas;
             const container = waveformContainer;
-            const rect = container.getBoundingClientRect();
+
+            if (!container.offsetWidth || !container.offsetHeight) {
+                setTimeout(() => drawWaveform(gain), 100);
+                return;
+            }
 
             canvas.width = container.offsetWidth * 2;
             canvas.height = container.offsetHeight * 2;
@@ -986,40 +994,50 @@
             const h = canvas.height;
 
             ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, w, h);
 
-            if (!audioData) {
-                // Если нет аудио-данных — рисуем случайные волны
-                ctx.fillStyle = 'rgba(102, 126, 234, 0.15)';
-                ctx.fillRect(0, 0, w, h);
+            if (!audioData || audioData.length === 0) {
                 for (let i = 0; i < w; i += 4) {
-                    const height = (Math.random() * 0.6 + 0.2) * h * 0.4;
+                    const height = (0.15 + Math.random() * 0.2) * h * 0.3;
                     const y = (h - height) / 2;
-                    ctx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+                    ctx.fillStyle = 'rgba(102, 126, 234, 0.15)';
                     ctx.fillRect(i, y, 2, height);
                 }
                 return;
             }
 
-            const data = audioData;
-            const step = Math.max(1, Math.floor(data.length / w));
-            const amp = 0.9 * Math.min(1, gain || 1);
+            const step = Math.max(1, Math.floor(audioData.length / w));
+            const amp = Math.min(3, Math.max(0.1, gain || 0.1));
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.fillRect(0, 0, w, h);
+            ctx.strokeStyle = 'rgba(102, 126, 234, 0.05)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, h / 2);
+            ctx.lineTo(w, h / 2);
+            ctx.stroke();
 
-            // Рисуем волны
             for (let i = 0; i < w; i++) {
                 const index = Math.floor(i * step);
-                const value = data[index] || 0;
-                const height = (value * amp + 0.5) * h * 0.7;
+                const value = audioData[index] || 0;
+
+                const maxHeight = h * 0.85;
+                const normalizedValue = Math.min(1, Math.abs(value) * amp);
+                const height = normalizedValue * maxHeight;
                 const y = (h - height) / 2;
 
-                const alpha = 0.2 + 0.6 * Math.abs(value);
-                ctx.fillStyle = `rgba(102, 126, 234, ${alpha})`;
-                ctx.fillRect(i * 2, y, 2, height);
+                const alpha = 0.15 + 0.5 * normalizedValue;
+                const r = Math.floor(102 + 30 * normalizedValue);
+                const g = Math.floor(126 - 30 * normalizedValue);
+                const b = Math.floor(234 - 20 * normalizedValue);
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+
+                const barWidth = Math.max(2, w / audioData.length * 2);
+                ctx.fillRect(i * 2, y, barWidth, height);
             }
         }
 
+        // === ГЕНЕРАЦИЯ ВОЛН ===
         function generateWaveformFromFile(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -1030,7 +1048,6 @@
                         }
                         const buffer = await audioContext.decodeAudioData(e.target.result);
                         const channelData = buffer.getChannelData(0);
-                        // Сжимаем данные для отображения
                         const step = Math.max(1, Math.floor(channelData.length / 2000));
                         const data = [];
                         for (let i = 0; i < channelData.length; i += step) {
@@ -1040,7 +1057,6 @@
                             }
                             data.push(sum / step);
                         }
-                        // Нормализуем
                         const max = Math.max(...data);
                         if (max > 0) {
                             for (let i = 0; i < data.length; i++) {
@@ -1058,6 +1074,84 @@
                 };
                 reader.readAsArrayBuffer(file);
             });
+        }
+
+        // === УПРАВЛЕНИЕ ГРОМКОСТЬЮ ЧЕРЕЗ WEB AUDIO API ===
+        function setupAudioGain() {
+            const player = window.mediaPlayer;
+            if (!player) return;
+
+            try {
+                // Создаём аудио-контекст, если его нет
+                if (!audioContext) {
+                    audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                }
+
+                // Если уже есть старые узлы — отключаем
+                if (mediaElementSource) {
+                    try {
+                        mediaElementSource.disconnect();
+                    } catch (e) {}
+                }
+                if (gainNode) {
+                    try {
+                        gainNode.disconnect();
+                    } catch (e) {}
+                }
+
+                // Создаём источник из медиа-элемента
+                mediaElementSource = audioContext.createMediaElementSource(player);
+                gainNode = audioContext.createGain();
+                gainNode.gain.value = currentGain;
+
+                // Подключаем: плеер → gainNode → динамики
+                mediaElementSource.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                // Сохраняем ссылку на плеер для обратной совместимости
+                player._gainNode = gainNode;
+
+                // Обновляем label
+                gainLabel.textContent = currentGain.toFixed(1) + 'x';
+                muteBtn.textContent = currentGain === 0 ? '🔈' : '🔊';
+
+                // Возобновляем аудио-контекст, если он приостановлен
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+
+                console.log('✅ Audio gain setup complete:', currentGain);
+                addLog(`🔊 Громкость: ${currentGain.toFixed(1)}x`, 'info');
+
+            } catch (err) {
+                console.warn('Web Audio API не поддерживается, используем стандартную громкость:', err);
+                // Fallback: используем стандартный volume
+                player.volume = Math.min(1, currentGain);
+                gainLabel.textContent = currentGain.toFixed(1) + 'x';
+                muteBtn.textContent = currentGain === 0 ? '🔈' : '🔊';
+            }
+        }
+
+        function applyGain(gain) {
+            currentGain = gain;
+
+            // Пробуем через Web Audio API
+            if (gainNode && gainNode.gain) {
+                gainNode.gain.value = gain;
+                gainLabel.textContent = gain.toFixed(1) + 'x';
+                muteBtn.textContent = gain === 0 ? '🔈' : '🔊';
+                drawWaveform(gain);
+                return;
+            }
+
+            // Fallback: через стандартный volume
+            const player = window.mediaPlayer;
+            if (player) {
+                player.volume = Math.min(1, gain);
+                gainLabel.textContent = gain.toFixed(1) + 'x';
+                muteBtn.textContent = gain === 0 ? '🔈' : '🔊';
+                drawWaveform(gain);
+            }
         }
 
         // === ОБНОВЛЕНИЕ СПИСКА ФАЙЛОВ ===
@@ -1154,7 +1248,7 @@
             playerWrapper.classList.add('visible');
             settingsRow.classList.add('visible');
 
-            // Генерируем волны из файла
+            // Генерируем волны
             generateWaveformFromFile(file.file || file).then(() => {
                 drawWaveform(currentGain);
             });
@@ -1167,6 +1261,12 @@
                     durationDisplay.textContent = formatTime(duration);
                     trimEndInput.value = formatTime(duration);
                     addLog(`📊 ${file.name}: ${formatTime(duration)}`, 'info');
+
+                    // Настраиваем громкость через Web Audio API
+                    setTimeout(() => {
+                        setupAudioGain();
+                        applyGain(currentGain);
+                    }, 100);
                 }
             });
 
@@ -1210,51 +1310,22 @@
             }
         }
 
-        // === УПРАВЛЕНИЕ ГРОМКОСТЬЮ ===
-        function applyGain(gain) {
-            const player = window.mediaPlayer;
-            if (player) {
-                player.volume = Math.min(1, gain);
-                gainLabel.textContent = gain.toFixed(1) + 'x';
-                muteBtn.textContent = gain === 0 ? '🔈' : '🔊';
-            }
-            // Обновляем волны при изменении громкости
-            drawWaveform(gain);
-        }
-
-        gainSlider.addEventListener('input', () => {
-            const val = parseFloat(gainSlider.value);
-            currentGain = val / 100;
-            applyGain(currentGain);
-        });
-
-        muteBtn.addEventListener('click', () => {
-            const player = window.mediaPlayer;
-            if (!player) return;
-            if (player.volume > 0) {
-                gainSlider.value = 0;
-                currentGain = 0;
-                applyGain(0);
-            } else {
-                gainSlider.value = 100;
-                currentGain = 1;
-                applyGain(1);
-            }
-        });
-
         // === ТАЙМЛАЙН ===
         function updateTimeline() {
             if (!duration || !isFinite(duration)) return;
+
             const startPercent = (trimStart / duration) * 100;
             const endPercent = (trimEnd / duration) * 100;
 
-            const clampedEnd = Math.min(endPercent, 100);
-            const clampedStart = Math.max(startPercent, 0);
+            const clampedStart = Math.max(0, Math.min(100, startPercent));
+            const clampedEnd = Math.max(0, Math.min(100, endPercent));
+            const width = Math.max(0.5, clampedEnd - clampedStart);
 
             trimRegion.style.left = clampedStart + '%';
-            trimRegion.style.width = (clampedEnd - clampedStart) + '%';
+            trimRegion.style.width = width + '%';
             trimHandleLeft.style.left = clampedStart + '%';
             trimHandleRight.style.left = clampedEnd + '%';
+
             timeLabelStart.textContent = formatTime(trimStart);
             timeLabelEnd.textContent = formatTime(trimEnd);
         }
@@ -1316,6 +1387,9 @@
         playBtn.addEventListener('click', () => {
             const player = window.mediaPlayer;
             if (!player) return;
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
             isPlaying ? player.pause() : player.play();
         });
 
@@ -1335,6 +1409,15 @@
             trimStart = 0;
             trimEnd = 0;
             audioData = null;
+            // Отключаем Web Audio
+            if (mediaElementSource) {
+                try { mediaElementSource.disconnect(); } catch (e) {}
+                mediaElementSource = null;
+            }
+            if (gainNode) {
+                try { gainNode.disconnect(); } catch (e) {}
+                gainNode = null;
+            }
             playerWrapper.classList.remove('visible');
             settingsRow.classList.remove('visible');
             fileBar.classList.remove('visible');
@@ -1348,7 +1431,6 @@
             batchVolumeBtn.disabled = true;
             files = [];
             currentFileIndex = 0;
-            // Очищаем волны
             const ctx = waveformCanvas.getContext('2d');
             ctx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
         }
@@ -1369,7 +1451,7 @@
             });
         });
 
-        // === ОБРАБОТКА (ФИКС КОДЕКА) ===
+        // === ОБРАБОТКА ===
         async function processSingleFile(file, start, end, gain, extractAudio = false) {
             return new Promise((resolve, reject) => {
                 const video = document.createElement('video');
@@ -1409,8 +1491,16 @@
                         dest.stream.getTracks().forEach(t => combined.addTrack(t));
 
                         const chunks = [];
-                        // ФИКС: используем AAC вместо Opus для лучшей совместимости
-                        const mimeType = extractAudio ? 'audio/webm' : 'video/webm;codecs=vp9,aac';
+                        let mimeType = extractAudio ? 'audio/webm' : 'video/webm';
+                        if (!extractAudio) {
+                            if (MediaRecorder.isTypeSupported('video/mp4')) {
+                                mimeType = 'video/mp4';
+                            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                                mimeType = 'video/webm;codecs=vp9';
+                            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                                mimeType = 'video/webm;codecs=vp8';
+                            }
+                        }
                         const recorder = new MediaRecorder(combined, { mimeType });
 
                         recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
@@ -1628,7 +1718,7 @@
                 audio: '🎵 Конвертация в аудио',
                 batch: '🔊 Изменение громкости'
             };
-            addLog(`${actionNames[action] || action}: ${targetFiles.length} файлов`, 'info');
+            addLog(`${actionNames[action] || action}: ${targetFiles.length} файлов (громкость ${gain.toFixed(1)}x)`, 'info');
             showProgress(true);
 
             let successCount = 0;
@@ -1700,6 +1790,23 @@
             handleAction('batch', files);
         });
 
+        // === ГРОМКОСТЬ (обработчик слайдера) ===
+        gainSlider.addEventListener('input', () => {
+            const val = parseFloat(gainSlider.value);
+            const gain = val / 100;
+            applyGain(gain);
+        });
+
+        muteBtn.addEventListener('click', () => {
+            if (currentGain > 0) {
+                gainSlider.value = 0;
+                applyGain(0);
+            } else {
+                gainSlider.value = 100;
+                applyGain(1);
+            }
+        });
+
         // === ЗАГРУЗКА ЧЕРЕЗ UI ===
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', (e) => { e.preventDefault();
@@ -1719,7 +1826,7 @@
             }
         });
 
-        // === ПЕРЕРИСОВКА ВОЛН ПРИ ИЗМЕНЕНИИ РАЗМЕРА ===
+        // === ПЕРЕРИСОВКА ВОЛН ===
         window.addEventListener('resize', () => {
             drawWaveform(currentGain);
         });
