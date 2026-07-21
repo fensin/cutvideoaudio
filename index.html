@@ -58,7 +58,6 @@
             margin-top: 4px;
         }
 
-        /* === ОСНОВНЫЕ ЭЛЕМЕНТЫ === */
         .upload-area {
             border: 2px dashed rgba(255, 255, 255, 0.2);
             border-radius: 16px;
@@ -85,7 +84,6 @@
             display: none;
         }
 
-        /* === ПЛЕЕР === */
         .player-section {
             display: none;
             margin-bottom: 24px;
@@ -131,7 +129,6 @@
             font-size: 13px;
         }
 
-        /* === НАСТРОЙКИ === */
         .controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -175,22 +172,6 @@
             margin-top: 4px;
         }
 
-        .control-group input[type="number"] {
-            width: 100%;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .control-group input[type="number"]:focus {
-            border-color: #667eea;
-        }
-
-        /* === КНОПКИ === */
         .actions {
             display: flex;
             gap: 12px;
@@ -262,7 +243,6 @@
             color: #fff;
         }
 
-        /* === ПРОГРЕСС === */
         .progress-section {
             display: none;
             margin-top: 16px;
@@ -295,7 +275,6 @@
             text-align: center;
         }
 
-        /* === ЛОГ === */
         .log {
             margin-top: 20px;
             padding: 16px;
@@ -304,7 +283,7 @@
             font-family: 'Consolas', monospace;
             font-size: 12px;
             color: rgba(255, 255, 255, 0.5);
-            max-height: 100px;
+            max-height: 150px;
             overflow-y: auto;
             display: none;
             line-height: 1.6;
@@ -317,8 +296,8 @@
         .log .error { color: #f87171; }
         .log .success { color: #34d399; }
         .log .info { color: #60a5fa; }
+        .log .warning { color: #fbbf24; }
 
-        /* === ФУТЕР === */
         .footer {
             text-align: center;
             margin-top: 32px;
@@ -327,42 +306,61 @@
             font-size: 12px;
             color: rgba(255, 255, 255, 0.15);
         }
+
+        .warning-box {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #fbbf24;
+            font-size: 14px;
+            display: none;
+        }
+
+        .warning-box.visible {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .warning-box strong {
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- ===== ЗАГОЛОВОК ===== -->
         <div class="header">
             <span class="logo">🎬</span>
             <h1>Media <span>Editor</span></h1>
-            <p>Обрезай видео, увеличивай громкость, конвертируй</p>
+            <p>Обрезай видео, увеличивай громкость</p>
         </div>
 
-        <!-- ===== ЗАГРУЗКА ===== -->
+        <div class="warning-box" id="warningBox">
+            ⚠️ <strong>Важно:</strong> Для работы редактора используй браузер <strong>Google Chrome</strong> или <strong>Microsoft Edge</strong>. Другие браузеры могут не поддерживать все функции.
+        </div>
+
         <div class="upload-area" id="uploadArea">
             <span class="icon">📁</span>
             <div>Перетащи файл сюда или нажми для выбора</div>
             <div style="font-size:12px;margin-top:8px;color:rgba(255,255,255,0.3);">
-                Поддерживаются: MP4, AVI, MKV, MOV, MP3, WAV, AAC, FLAC
+                MP4, AVI, MKV, MOV, MP3, WAV, AAC
             </div>
             <input type="file" id="fileInput" accept="video/*,audio/*">
         </div>
 
-        <!-- ===== ИНФОРМАЦИЯ О ФАЙЛЕ ===== -->
         <div class="player-section" id="playerSection">
             <div class="file-info">
                 <span class="name" id="fileName">file.mp4</span>
                 <span class="size" id="fileSize">0 MB</span>
                 <span class="size" id="fileType">видео</span>
             </div>
-
             <div id="playerContainer">
                 <video id="mediaPlayer" controls></video>
             </div>
         </div>
 
-        <!-- ===== НАСТРОЙКИ ===== -->
         <div class="player-section" id="controlsSection">
             <div class="controls">
                 <div class="control-group">
@@ -376,21 +374,20 @@
                     <div class="value" id="endValue">0.0</div>
                 </div>
                 <div class="control-group">
-                    <label>🔊 Громкость (увеличение)</label>
-                    <input type="range" id="volumeBoost" min="1" max="10" value="1" step="0.1">
+                    <label>🔊 Громкость</label>
+                    <input type="range" id="volumeBoost" min="1" max="5" value="1" step="0.1">
                     <div class="value" id="volumeValue">1.0x</div>
                 </div>
                 <div class="control-group">
-                    <label>📐 Размер превью</label>
+                    <label>📐 Качество</label>
                     <select id="previewSize" style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#fff;font-size:14px;outline:none;">
-                        <option value="480">480p (маленький)</option>
-                        <option value="720" selected>720p (средний)</option>
-                        <option value="1080">1080p (большой)</option>
+                        <option value="480">480p</option>
+                        <option value="720" selected>720p</option>
+                        <option value="1080">1080p</option>
                     </select>
                 </div>
             </div>
 
-            <!-- ===== КНОПКИ ===== -->
             <div class="actions">
                 <button class="btn btn-success" id="trimBtn">✂️ Обрезать</button>
                 <button class="btn btn-primary" id="volumeBtn">🔊 Увеличить громкость</button>
@@ -399,25 +396,30 @@
             </div>
         </div>
 
-        <!-- ===== ПРОГРЕСС ===== -->
         <div class="progress-section" id="progressSection">
             <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
             <div class="progress-text" id="progressText">Обработка...</div>
         </div>
 
-        <!-- ===== ЛОГ ===== -->
         <div class="log" id="log"></div>
 
-        <!-- ===== ФУТЕР ===== -->
         <div class="footer">
-            🎵 Всё обрабатывается локально в твоём браузере &bull; Файлы не покидают твой компьютер
+            🎵 Всё обрабатывается локально в твоём браузере &bull; Файлы не покидают компьютер
         </div>
     </div>
 
     <script>
         // ============================================================
-        //  ПОЛНАЯ ЛОГИКА РАБОТЫ (без сторонних библиотек)
+        //  УПРОЩЁННАЯ ВЕРСИЯ МЕДИА-РЕДАКТОРА
         // ============================================================
+
+        // === ПРОВЕРКА БРАУЗЕРА ===
+        const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+        const isEdge = /Edg/.test(navigator.userAgent);
+
+        if (!isChrome && !isEdge) {
+            document.getElementById('warningBox').classList.add('visible');
+        }
 
         // === ЭЛЕМЕНТЫ ===
         const uploadArea = document.getElementById('uploadArea');
@@ -446,7 +448,6 @@
 
         let currentFile = null;
         let currentFileUrl = null;
-        let mediaType = 'video';
         let isProcessing = false;
 
         // === ЛОГГЕР ===
@@ -457,125 +458,216 @@
             entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
             log.appendChild(entry);
             log.scrollTop = log.scrollHeight;
+            console.log(`[${type}]`, message);
         }
 
         // === ЗАГРУЗКА ФАЙЛА ===
         function loadFile(file) {
             if (!file) return;
 
-            currentFile = file;
-            const url = URL.createObjectURL(file);
-            currentFileUrl = url;
+            try {
+                currentFile = file;
+                const url = URL.createObjectURL(file);
+                currentFileUrl = url;
 
-            // Определяем тип
-            const type = file.type.startsWith('video/') ? 'video' : 'audio';
-            mediaType = type;
+                const type = file.type.startsWith('video/') ? 'video' : 'audio';
+                const isVideo = type === 'video';
 
-            // Обновляем информацию
-            fileName.textContent = file.name;
-            fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-            fileType.textContent = type === 'video' ? '🎬 видео' : '🎵 аудио';
+                fileName.textContent = file.name;
+                fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+                fileType.textContent = isVideo ? '🎬 видео' : '🎵 аудио';
 
-            // Загружаем в плеер
-            if (type === 'video') {
-                mediaPlayer = document.createElement('video');
-                mediaPlayer.controls = true;
-                mediaPlayer.style.width = '100%';
-                mediaPlayer.style.maxHeight = '400px';
-                mediaPlayer.style.borderRadius = '12px';
-                mediaPlayer.style.background = '#000';
-            } else {
-                mediaPlayer = document.createElement('audio');
-                mediaPlayer.controls = true;
-                mediaPlayer.style.width = '100%';
+                // Создаём плеер
+                const container = document.getElementById('playerContainer');
+                container.innerHTML = '';
+
+                const player = document.createElement(isVideo ? 'video' : 'audio');
+                player.controls = true;
+                player.style.width = '100%';
+                if (isVideo) {
+                    player.style.maxHeight = '400px';
+                    player.style.borderRadius = '12px';
+                    player.style.background = '#000';
+                }
+                player.src = url;
+                player.load();
+
+                container.appendChild(player);
+
+                // Сохраняем ссылку на плеер
+                window.mediaPlayer = player;
+
+                // Показываем секции
+                playerSection.classList.add('visible');
+                controlsSection.classList.add('visible');
+
+                // Настраиваем слайдеры
+                player.addEventListener('loadedmetadata', () => {
+                    const duration = player.duration;
+                    if (duration && isFinite(duration)) {
+                        startTime.max = duration;
+                        endTime.max = duration;
+                        endTime.value = duration;
+                        startValue.textContent = '0.0';
+                        endValue.textContent = duration.toFixed(1);
+                        addLog(`📊 Длительность: ${duration.toFixed(1)}с`, 'info');
+                    }
+                });
+
+                addLog(`✅ Загружен: ${file.name} (${type})`, 'success');
+
+            } catch (err) {
+                addLog(`❌ Ошибка загрузки: ${err.message}`, 'error');
+                console.error(err);
             }
-
-            const container = document.getElementById('playerContainer');
-            container.innerHTML = '';
-            container.appendChild(mediaPlayer);
-
-            mediaPlayer.src = url;
-            mediaPlayer.load();
-
-            // Показываем секции
-            playerSection.classList.add('visible');
-            controlsSection.classList.add('visible');
-
-            // Настраиваем слайдеры
-            mediaPlayer.addEventListener('loadedmetadata', () => {
-                const duration = mediaPlayer.duration;
-                startTime.max = duration;
-                endTime.max = duration;
-                endTime.value = duration;
-                startValue.textContent = '0.0';
-                endValue.textContent = duration.toFixed(1);
-            });
-
-            addLog(`✅ Загружен: ${file.name} (${type})`, 'success');
         }
 
-        // === ОБРЕЗКА ===
-        async function trimMedia() {
-            if (!currentFile || isProcessing) return;
-            isProcessing = true;
+        // === УПРОЩЁННАЯ ОБРАБОТКА (только обрезка) ===
+        async function processMedia() {
+            if (!currentFile || isProcessing) {
+                addLog('⚠️ Сначала загрузи файл!', 'warning');
+                return;
+            }
 
             const start = parseFloat(startTime.value);
             const end = parseFloat(endTime.value);
-            const duration = end - start;
-
-            if (duration <= 0) {
-                addLog('❌ Ошибка: конец должен быть больше начала', 'error');
-                isProcessing = false;
-                return;
-            }
-
-            addLog(`✂️ Обрезка: ${start.toFixed(1)}с — ${end.toFixed(1)}с (${duration.toFixed(1)}с)`, 'info');
-            showProgress(true);
-
-            try {
-                const result = await processMedia(currentFile, {
-                    start,
-                    end,
-                    volume: parseFloat(volumeBoost.value),
-                    trim: true
-                });
-
-                downloadFile(result, `trimmed_${currentFile.name}`);
-                addLog('✅ Обрезка завершена!', 'success');
-            } catch (err) {
-                addLog(`❌ Ошибка: ${err.message}`, 'error');
-                console.error(err);
-            }
-
-            showProgress(false);
-            isProcessing = false;
-        }
-
-        // === УВЕЛИЧЕНИЕ ГРОМКОСТИ ===
-        async function boostVolume() {
-            if (!currentFile || isProcessing) return;
-            isProcessing = true;
-
             const volume = parseFloat(volumeBoost.value);
-            if (volume <= 1) {
-                addLog('⚠️ Установи громкость > 1x для увеличения', 'error');
-                isProcessing = false;
+            const action = this === trimBtn ? 'trim' : 'volume';
+
+            if (action === 'trim' && (end - start) <= 0) {
+                addLog('❌ Конец должен быть больше начала', 'error');
                 return;
             }
 
-            addLog(`🔊 Увеличение громкости: ${volume}x`, 'info');
+            isProcessing = true;
+            const isVideo = currentFile.type.startsWith('video/');
+
+            addLog(`🔄 Начинаю обработку... (${action})`, 'info');
             showProgress(true);
 
             try {
-                const result = await processMedia(currentFile, {
-                    start: 0,
-                    end: 0,
-                    volume: volume,
-                    trim: false
+                const result = await new Promise((resolve, reject) => {
+                    const video = document.createElement('video');
+                    video.src = URL.createObjectURL(currentFile);
+                    video.muted = true;
+                    video.crossOrigin = 'anonymous';
+
+                    video.onloadedmetadata = () => {
+                        try {
+                            const duration = video.duration;
+                            const actualStart = action === 'trim' ? start : 0;
+                            const actualEnd = action === 'trim' ? end : duration;
+
+                            // Создаём canvas для захвата видео
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+
+                            const size = parseInt(previewSize.value);
+                            const width = isVideo ? Math.min(video.videoWidth || 640, size) : 640;
+                            const height = isVideo ? Math.min(video.videoHeight || 360, Math.round(size * 0.5625)) : 100;
+
+                            canvas.width = width;
+                            canvas.height = height || 100;
+
+                            // Аудио контекст
+                            const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                            const stream = video.captureStream();
+                            const source = audioCtx.createMediaStreamSource(stream);
+                            const gain = audioCtx.createGain();
+                            gain.gain.value = volume;
+
+                            const dest = audioCtx.createMediaStreamDestination();
+                            source.connect(gain);
+                            gain.connect(dest);
+
+                            // Собираем поток
+                            const combined = new MediaStream();
+                            const videoTrack = stream.getVideoTracks()[0];
+                            if (videoTrack) combined.addTrack(videoTrack);
+                            dest.stream.getTracks().forEach(t => combined.addTrack(t));
+
+                            const chunks = [];
+                            const recorder = new MediaRecorder(combined, {
+                                mimeType: 'video/webm;codecs=vp9,opus'
+                            });
+
+                            recorder.ondataavailable = (e) => {
+                                if (e.data.size > 0) chunks.push(e.data);
+                            };
+
+                            recorder.onstop = () => {
+                                const blob = new Blob(chunks, { type: 'video/webm' });
+                                resolve(blob);
+                                video.remove();
+                                URL.revokeObjectURL(video.src);
+                            };
+
+                            recorder.start(100);
+                            video.currentTime = actualStart;
+                            video.play();
+
+                            let lastProgress = 0;
+                            const checkInterval = setInterval(() => {
+                                const current = video.currentTime;
+                                const total = actualEnd - actualStart;
+                                const progress = total > 0 ? ((current - actualStart) / total) * 100 : 0;
+
+                                if (Math.floor(progress) > lastProgress) {
+                                    lastProgress = Math.floor(progress);
+                                    updateProgress(lastProgress);
+                                }
+
+                                if (current >= actualEnd) {
+                                    video.pause();
+                                    clearInterval(checkInterval);
+                                    recorder.stop();
+                                    updateProgress(100);
+                                }
+                            }, 100);
+
+                            // Рендерим видео на canvas
+                            if (isVideo) {
+                                const renderCanvas = document.createElement('canvas');
+                                renderCanvas.width = width;
+                                renderCanvas.height = height;
+                                document.body.appendChild(renderCanvas);
+                                renderCanvas.style.display = 'none';
+
+                                const renderInterval = setInterval(() => {
+                                    if (!video.paused) {
+                                        const ctx2 = renderCanvas.getContext('2d');
+                                        ctx2.drawImage(video, 0, 0, width, height);
+                                    }
+                                }, 33);
+                            }
+
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+
+                    video.onerror = () => {
+                        reject(new Error('Ошибка загрузки видео'));
+                        video.remove();
+                        URL.revokeObjectURL(video.src);
+                    };
                 });
 
-                downloadFile(result, `boosted_${currentFile.name}`);
-                addLog('✅ Громкость увеличена!', 'success');
+                // Скачиваем результат
+                const ext = currentFile.name.split('.').pop();
+                const baseName = currentFile.name.replace(/\.[^/.]+$/, '');
+                const suffix = action === 'trim' ? '_trimmed' : '_boosted';
+                const url = URL.createObjectURL(result);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${baseName}${suffix}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+                addLog(`✅ Готово! Файл скачан.`, 'success');
+
             } catch (err) {
                 addLog(`❌ Ошибка: ${err.message}`, 'error');
                 console.error(err);
@@ -583,199 +675,45 @@
 
             showProgress(false);
             isProcessing = false;
-        }
-
-        // === ОСНОВНАЯ ФУНКЦИЯ ОБРАБОТКИ (использует Canvas + Web Audio) ===
-        function processMedia(file, options) {
-            return new Promise((resolve, reject) => {
-                const url = URL.createObjectURL(file);
-                const video = document.createElement('video');
-                video.src = url;
-                video.muted = true;
-                video.crossOrigin = 'anonymous';
-
-                video.onloadedmetadata = () => {
-                    const duration = video.duration;
-                    let start = options.start || 0;
-                    let end = options.end || duration;
-                    const volume = options.volume || 1;
-                    const trim = options.trim || false;
-
-                    if (trim) {
-                        // Обрезка
-                        const trimmedDuration = end - start;
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-
-                        // Настройки размера
-                        const size = parseInt(previewSize.value);
-                        const isVideo = file.type.startsWith('video/');
-                        const width = isVideo ? Math.min(video.videoWidth, size) : 640;
-                        const height = isVideo ? Math.min(video.videoHeight, Math.round(size * 0.5625)) : 0;
-
-                        canvas.width = width;
-                        canvas.height = height || 100;
-
-                        // Создаём аудио контекст
-                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        const mediaStream = video.captureStream();
-                        const source = audioCtx.createMediaStreamSource(mediaStream);
-                        const gainNode = audioCtx.createGain();
-                        gainNode.gain.value = volume;
-
-                        // Настраиваем аудио
-                        const audioDestination = audioCtx.createMediaStreamDestination();
-                        source.connect(gainNode);
-                        gainNode.connect(audioDestination);
-
-                        // Объединяем видео и аудио
-                        const combinedStream = new MediaStream();
-                        const videoTrack = mediaStream.getVideoTracks()[0];
-                        if (videoTrack) combinedStream.addTrack(videoTrack);
-                        audioDestination.stream.getTracks().forEach(t => combinedStream.addTrack(t));
-
-                        const chunks = [];
-                        const recorder = new MediaRecorder(combinedStream, {
-                            mimeType: 'video/webm;codecs=vp9,opus'
-                        });
-
-                        recorder.ondataavailable = (e) => {
-                            if (e.data.size > 0) chunks.push(e.data);
-                        };
-
-                        recorder.onstop = () => {
-                            const blob = new Blob(chunks, { type: 'video/webm' });
-                            resolve(blob);
-                            video.remove();
-                            URL.revokeObjectURL(url);
-                        };
-
-                        // Запускаем запись
-                        recorder.start(100);
-                        video.currentTime = start;
-                        video.play();
-
-                        const interval = setInterval(() => {
-                            if (video.currentTime >= end) {
-                                video.pause();
-                                clearInterval(interval);
-                                recorder.stop();
-                            }
-                        }, 100);
-
-                        // Рендерим видео на canvas (для сохранения кадров)
-                        const renderCanvas = document.createElement('canvas');
-                        const renderCtx = renderCanvas.getContext('2d');
-
-                        if (isVideo) {
-                            renderCanvas.width = width;
-                            renderCanvas.height = height;
-                            document.body.appendChild(renderCanvas);
-                            renderCanvas.style.display = 'none';
-
-                            const renderInterval = setInterval(() => {
-                                renderCtx.drawImage(video, 0, 0, width, height);
-                            }, 33);
-                        }
-
-                    } else {
-                        // Только изменение громкости (без обрезки)
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-
-                        const isVideo = file.type.startsWith('video/');
-                        const size = parseInt(previewSize.value);
-                        const width = isVideo ? Math.min(video.videoWidth, size) : 640;
-                        const height = isVideo ? Math.min(video.videoHeight, Math.round(size * 0.5625)) : 0;
-
-                        canvas.width = width;
-                        canvas.height = height || 100;
-
-                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        const mediaStream = video.captureStream();
-                        const source = audioCtx.createMediaStreamSource(mediaStream);
-                        const gainNode = audioCtx.createGain();
-                        gainNode.gain.value = volume;
-
-                        const audioDestination = audioCtx.createMediaStreamDestination();
-                        source.connect(gainNode);
-                        gainNode.connect(audioDestination);
-
-                        const combinedStream = new MediaStream();
-                        const videoTrack = mediaStream.getVideoTracks()[0];
-                        if (videoTrack) combinedStream.addTrack(videoTrack);
-                        audioDestination.stream.getTracks().forEach(t => combinedStream.addTrack(t));
-
-                        const chunks = [];
-                        const recorder = new MediaRecorder(combinedStream, {
-                            mimeType: 'video/webm;codecs=vp9,opus'
-                        });
-
-                        recorder.ondataavailable = (e) => {
-                            if (e.data.size > 0) chunks.push(e.data);
-                        };
-
-                        recorder.onstop = () => {
-                            const blob = new Blob(chunks, { type: 'video/webm' });
-                            resolve(blob);
-                            video.remove();
-                            URL.revokeObjectURL(url);
-                        };
-
-                        recorder.start(100);
-                        video.play();
-
-                        const duration = video.duration;
-                        const interval = setInterval(() => {
-                            if (video.currentTime >= duration) {
-                                video.pause();
-                                clearInterval(interval);
-                                recorder.stop();
-                            }
-                        }, 100);
-                    }
-                };
-
-                video.onerror = () => {
-                    reject(new Error('Ошибка загрузки видео/аудио'));
-                    video.remove();
-                    URL.revokeObjectURL(url);
-                };
-            });
-        }
-
-        // === СКАЧИВАНИЕ ===
-        function downloadFile(blob, name) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = name.replace(/\.[^/.]+$/, '') + '.webm';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
         }
 
         // === ПРОГРЕСС ===
         function showProgress(show) {
             progressSection.classList.toggle('visible', show);
+            if (!show) {
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Обработка...';
+            }
+        }
+
+        function updateProgress(value) {
+            progressFill.style.width = Math.min(value, 100) + '%';
+            progressText.textContent = `Обработка... ${Math.min(value, 100)}%`;
         }
 
         // === ПРЕВЬЮ ===
         function previewTrim() {
+            const player = window.mediaPlayer;
+            if (!player) {
+                addLog('⚠️ Нет загруженного файла', 'warning');
+                return;
+            }
             const start = parseFloat(startTime.value);
             const end = parseFloat(endTime.value);
-            if (mediaPlayer) {
-                mediaPlayer.currentTime = start;
-                mediaPlayer.play();
-                const check = setInterval(() => {
-                    if (mediaPlayer.currentTime >= end) {
-                        mediaPlayer.pause();
-                        clearInterval(check);
-                    }
-                }, 100);
-                addLog(`👁️ Превью: ${start.toFixed(1)}с — ${end.toFixed(1)}с`, 'info');
+            if (end - start <= 0) {
+                addLog('❌ Конец должен быть больше начала', 'error');
+                return;
             }
+            player.currentTime = start;
+            player.play();
+            const check = setInterval(() => {
+                if (player.currentTime >= end) {
+                    player.pause();
+                    clearInterval(check);
+                    addLog(`👁️ Превью завершено (${start.toFixed(1)}с — ${end.toFixed(1)}с)`, 'info');
+                }
+            }, 100);
+            addLog(`👁️ Превью: ${start.toFixed(1)}с — ${end.toFixed(1)}с`, 'info');
         }
 
         // === СБРОС ===
@@ -785,11 +723,13 @@
             }
             currentFile = null;
             currentFileUrl = null;
+            window.mediaPlayer = null;
             playerSection.classList.remove('visible');
             controlsSection.classList.remove('visible');
             log.classList.remove('visible');
             log.innerHTML = '';
             fileInput.value = '';
+            progressSection.classList.remove('visible');
             addLog('🔄 Сброшено', 'info');
         }
 
@@ -827,12 +767,17 @@
         });
 
         // Кнопки
-        trimBtn.addEventListener('click', trimMedia);
-        volumeBtn.addEventListener('click', boostVolume);
+        trimBtn.addEventListener('click', processMedia);
+        volumeBtn.addEventListener('click', processMedia);
         previewBtn.addEventListener('click', previewTrim);
         resetBtn.addEventListener('click', resetAll);
 
-        addLog('🎬 Редактор загружен! Загрузи видео или аудио для начала работы.', 'info');
+        // Проверка поддержки
+        if (!window.MediaRecorder) {
+            addLog('❌ Ваш браузер не поддерживает MediaRecorder. Используйте Chrome или Edge.', 'error');
+        } else {
+            addLog('🎬 Редактор загружен! Загрузи видео или аудио.', 'info');
+        }
     </script>
 </body>
 </html>
