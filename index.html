@@ -19,6 +19,28 @@
             background: linear-gradient(145deg, #0f0c29, #302b63, #24243e);
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+        }
+
+        .version {
+            position: fixed;
+            bottom: 16px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 12px;
+            font-family: 'Consolas', monospace;
+            letter-spacing: 0.5px;
+            user-select: none;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .version:hover {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .version .v {
+            color: rgba(255, 255, 255, 0.08);
         }
 
         .container {
@@ -143,6 +165,57 @@
             color: #ef4444;
         }
 
+        .file-list {
+            display: none;
+            margin: 16px 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .file-list.visible {
+            display: block;
+        }
+
+        .file-list .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+        }
+
+        .file-list .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-list .file-item .status {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .file-list .file-item .status.done {
+            background: rgba(34, 197, 94, 0.2);
+            color: #34d399;
+        }
+
+        .file-list .file-item .status.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .file-list .file-item .status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
         .player-wrapper {
             position: relative;
             background: #000;
@@ -171,12 +244,34 @@
 
         .timeline-container {
             position: relative;
-            height: 48px;
+            height: 80px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             cursor: pointer;
             overflow: hidden;
             user-select: none;
+        }
+
+        /* === ВОЛНЫ === */
+        .waveform-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 0;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .waveform-container canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         .timeline-container .click-zone {
@@ -185,7 +280,7 @@
             left: 0;
             right: 0;
             bottom: -12px;
-            z-index: 1;
+            z-index: 2;
             cursor: pointer;
         }
 
@@ -198,7 +293,7 @@
             border-radius: 8px;
             pointer-events: none;
             transition: width 0.05s linear;
-            z-index: 2;
+            z-index: 3;
         }
 
         .timeline-container .trim-region {
@@ -209,7 +304,7 @@
             border: 2px solid #667eea;
             border-radius: 8px;
             pointer-events: none;
-            z-index: 3;
+            z-index: 4;
         }
 
         .timeline-container .trim-handle {
@@ -222,7 +317,7 @@
             cursor: ew-resize;
             pointer-events: all;
             transition: background 0.2s, box-shadow 0.2s;
-            z-index: 5;
+            z-index: 6;
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
@@ -262,7 +357,7 @@
             font-size: 11px;
             font-family: monospace;
             pointer-events: none;
-            z-index: 4;
+            z-index: 5;
             background: rgba(0, 0, 0, 0.6);
             padding: 2px 8px;
             border-radius: 4px;
@@ -285,7 +380,7 @@
             background: #fff;
             pointer-events: none;
             transition: left 0.05s linear;
-            z-index: 6;
+            z-index: 7;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
@@ -413,18 +508,25 @@
             border-color: #667eea;
         }
 
-        .settings-row .setting .boost-label {
-            min-width: 40px;
-            text-align: center;
-            color: #fff;
-            font-weight: 600;
-            font-size: 15px;
+        .settings-row .setting .apply-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            background: rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .settings-row .setting .gain-slider {
-            width: 140px;
-            accent-color: #667eea;
-            cursor: pointer;
+        .settings-row .setting .apply-btn:hover {
+            background: rgba(102, 126, 234, 0.5);
+            border-color: #667eea;
+            transform: scale(1.05);
         }
 
         .actions {
@@ -476,6 +578,15 @@
 
         .btn-purple:hover:not(:disabled) {
             box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
         }
 
         .btn-outline {
@@ -620,11 +731,17 @@
             .settings-row { flex-direction: column; }
             .player-controls { flex-wrap: wrap; }
             .player-controls .volume-slider { max-width: unset; }
-            .settings-row .setting .gain-slider { width: 100%; }
+            .settings-row .setting input[type="text"] { width: 70px; }
+            .version { bottom: 8px; right: 12px; font-size: 10px; }
+            .timeline-container { height: 60px; }
         }
     </style>
 </head>
 <body>
+
+    <div class="version" id="versionDisplay">
+        <span class="v">v</span>1.8
+    </div>
 
     <div class="container">
         <div class="header">
@@ -637,16 +754,18 @@
             <span class="icon">📁</span>
             <div>Перетащи файл сюда или нажми для выбора</div>
             <div style="font-size:12px;margin-top:8px;color:rgba(255,255,255,0.3);">
-                MP4, AVI, MKV, MOV, MP3, WAV, AAC
+                Можно выбрать несколько файлов
             </div>
-            <input type="file" id="fileInput" accept="video/*,audio/*">
+            <input type="file" id="fileInput" accept="video/*,audio/*" multiple>
         </div>
 
         <div class="file-bar" id="fileBar">
-            <span class="name" id="fileName">file.mp4</span>
+            <span class="name" id="fileName">файлов: 0</span>
             <span class="size" id="fileSize">0 MB</span>
-            <button class="close-btn" id="closeBtn" title="Удалить файл">✕</button>
+            <button class="close-btn" id="closeBtn" title="Удалить все файлы">✕</button>
         </div>
+
+        <div class="file-list" id="fileList"></div>
 
         <div class="player-wrapper" id="playerWrapper">
             <div id="playerContainer">
@@ -655,6 +774,10 @@
 
             <div class="timeline-wrapper">
                 <div class="timeline-container" id="timelineContainer">
+                    <!-- Волны -->
+                    <div class="waveform-container" id="waveformContainer">
+                        <canvas id="waveformCanvas"></canvas>
+                    </div>
                     <div class="click-zone" id="clickZone"></div>
                     <div class="progress-fill" id="progressFill"></div>
                     <div class="trim-region" id="trimRegion"></div>
@@ -698,13 +821,14 @@
             <div class="setting">
                 <span>⏱️ Конец</span>
                 <input type="text" id="trimEndInput" value="00:00" placeholder="00:00">
-                <button class="btn-icon" id="applyTimeBtn" style="width:32px;height:32px;font-size:16px;background:rgba(102,126,234,0.3);color:#667eea;border:2px solid rgba(102,126,234,0.3);border-radius:50%;cursor:pointer;transition:all 0.3s;">✓</button>
+                <button class="apply-btn" id="applyTimeBtn">✓</button>
             </div>
         </div>
 
         <div class="actions">
             <button class="btn btn-success" id="trimBtn" disabled>✂️ Обрезать</button>
             <button class="btn btn-purple" id="videoToAudioBtn" disabled>🎵 Видео → Аудио</button>
+            <button class="btn btn-warning" id="batchVolumeBtn" disabled>🔊 Изменить громкость всех</button>
             <button class="btn btn-outline" id="resetBtn">🔄 Сбросить</button>
         </div>
 
@@ -733,6 +857,14 @@
 
     <script>
         // ============================================================
+        //  ВЕРСИЯ
+        // ============================================================
+
+        const VERSION = '1.8';
+        document.getElementById('versionDisplay').innerHTML = `<span class="v">v</span>${VERSION}`;
+        console.log(`📌 Версия: ${VERSION}`);
+
+        // ============================================================
         //  ПОЛНАЯ ЛОГИКА
         // ============================================================
 
@@ -743,6 +875,7 @@
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
         const closeBtn = document.getElementById('closeBtn');
+        const fileList = document.getElementById('fileList');
         const playerWrapper = document.getElementById('playerWrapper');
         const playerContainer = document.getElementById('playerContainer');
         const mediaPlayer = document.getElementById('mediaPlayer');
@@ -769,6 +902,7 @@
         const applyTimeBtn = document.getElementById('applyTimeBtn');
         const trimBtn = document.getElementById('trimBtn');
         const videoToAudioBtn = document.getElementById('videoToAudioBtn');
+        const batchVolumeBtn = document.getElementById('batchVolumeBtn');
         const resetBtn = document.getElementById('resetBtn');
         const progressSection = document.getElementById('progressSection');
         const progressFillBar = document.getElementById('progressFillBar');
@@ -778,8 +912,12 @@
         const modalText = document.getElementById('modalText');
         const modalConfirm = document.getElementById('modalConfirm');
         const modalCancel = document.getElementById('modalCancel');
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const waveformContainer = document.getElementById('waveformContainer');
 
-        let currentFile = null;
+        // === СОСТОЯНИЕ ===
+        let files = [];
+        let currentFileIndex = 0;
         let currentFileUrl = null;
         let isProcessing = false;
         let isPlaying = false;
@@ -789,6 +927,8 @@
         let isDragging = false;
         let dragType = null;
         let currentGain = 1;
+        let audioContext = null;
+        let audioData = null;
 
         // === ЛОГГЕР ===
         function addLog(message, type = 'info') {
@@ -830,20 +970,173 @@
             modalCancel.onclick = () => modalOverlay.classList.remove('visible');
         }
 
-        // === ЗАГРУЗКА ===
-        function loadFile(file) {
-            if (!file) return;
+        // === ВОЛНЫ ===
+        function drawWaveform(gain) {
+            const canvas = waveformCanvas;
+            const container = waveformContainer;
+            const rect = container.getBoundingClientRect();
+
+            canvas.width = container.offsetWidth * 2;
+            canvas.height = container.offsetHeight * 2;
+            canvas.style.width = container.offsetWidth + 'px';
+            canvas.style.height = container.offsetHeight + 'px';
+
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            if (!audioData) {
+                // Если нет аудио-данных — рисуем случайные волны
+                ctx.fillStyle = 'rgba(102, 126, 234, 0.15)';
+                ctx.fillRect(0, 0, w, h);
+                for (let i = 0; i < w; i += 4) {
+                    const height = (Math.random() * 0.6 + 0.2) * h * 0.4;
+                    const y = (h - height) / 2;
+                    ctx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+                    ctx.fillRect(i, y, 2, height);
+                }
+                return;
+            }
+
+            const data = audioData;
+            const step = Math.max(1, Math.floor(data.length / w));
+            const amp = 0.9 * Math.min(1, gain || 1);
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, w, h);
+
+            // Рисуем волны
+            for (let i = 0; i < w; i++) {
+                const index = Math.floor(i * step);
+                const value = data[index] || 0;
+                const height = (value * amp + 0.5) * h * 0.7;
+                const y = (h - height) / 2;
+
+                const alpha = 0.2 + 0.6 * Math.abs(value);
+                ctx.fillStyle = `rgba(102, 126, 234, ${alpha})`;
+                ctx.fillRect(i * 2, y, 2, height);
+            }
+        }
+
+        function generateWaveformFromFile(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        if (!audioContext) {
+                            audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                        }
+                        const buffer = await audioContext.decodeAudioData(e.target.result);
+                        const channelData = buffer.getChannelData(0);
+                        // Сжимаем данные для отображения
+                        const step = Math.max(1, Math.floor(channelData.length / 2000));
+                        const data = [];
+                        for (let i = 0; i < channelData.length; i += step) {
+                            let sum = 0;
+                            for (let j = 0; j < step && i + j < channelData.length; j++) {
+                                sum += Math.abs(channelData[i + j]);
+                            }
+                            data.push(sum / step);
+                        }
+                        // Нормализуем
+                        const max = Math.max(...data);
+                        if (max > 0) {
+                            for (let i = 0; i < data.length; i++) {
+                                data[i] = data[i] / max;
+                            }
+                        }
+                        audioData = data;
+                        drawWaveform(currentGain);
+                        resolve();
+                    } catch (err) {
+                        console.warn('Не удалось декодировать аудио для волн:', err);
+                        audioData = null;
+                        resolve();
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // === ОБНОВЛЕНИЕ СПИСКА ФАЙЛОВ ===
+        function updateFileList() {
+            fileList.innerHTML = '';
+            if (files.length === 0) {
+                fileList.classList.remove('visible');
+                return;
+            }
+            fileList.classList.add('visible');
+
+            files.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                const statusClass = f.status === 'done' ? 'done' : f.status === 'error' ? 'error' : 'pending';
+                div.innerHTML = `
+                    <span>${i + 1}.</span>
+                    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.3);">${(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                    <span class="status ${statusClass}">${f.status || 'готов'}</span>
+                    <button class="close-btn" style="width:20px;height:20px;font-size:12px;" data-index="${i}" title="Удалить файл">✕</button>
+                `;
+                fileList.appendChild(div);
+
+                const delBtn = div.querySelector('.close-btn');
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(delBtn.dataset.index);
+                    removeFile(idx);
+                });
+            });
+
+            const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+            fileName.textContent = `файлов: ${files.length}`;
+            fileSize.textContent = (totalSize / 1024 / 1024).toFixed(1) + ' MB';
+
+            const hasVideo = files.some(f => f.type.startsWith('video/'));
+            const canTrim = files.length === 1 && (hasVideo || files[0].type.startsWith('audio/'));
+            const canAudio = files.length === 1 && hasVideo;
+            const canBatch = files.length > 1;
+
+            trimBtn.disabled = !canTrim || isProcessing;
+            videoToAudioBtn.disabled = !canAudio || isProcessing;
+            batchVolumeBtn.disabled = !canBatch || isProcessing;
+        }
+
+        // === УДАЛЕНИЕ ФАЙЛА ===
+        function removeFile(index) {
+            if (index < 0 || index >= files.length) return;
+            if (index === currentFileIndex && currentFileUrl) {
+                URL.revokeObjectURL(currentFileUrl);
+                currentFileUrl = null;
+                playerWrapper.classList.remove('visible');
+                settingsRow.classList.remove('visible');
+            }
+            files.splice(index, 1);
+            if (files.length === 0) {
+                currentFileIndex = 0;
+                resetAll();
+            } else if (index <= currentFileIndex && currentFileIndex > 0) {
+                currentFileIndex--;
+            }
+            if (files.length > 0 && currentFileIndex < files.length) {
+                loadFileByIndex(currentFileIndex);
+            }
+            updateFileList();
+        }
+
+        // === ЗАГРУЗКА ФАЙЛА ПО ИНДЕКСУ ===
+        function loadFileByIndex(index) {
+            if (index < 0 || index >= files.length) return;
+            const file = files[index];
+            currentFileIndex = index;
             if (currentFileUrl) URL.revokeObjectURL(currentFileUrl);
 
-            currentFile = file;
-            const url = URL.createObjectURL(file);
+            const url = URL.createObjectURL(file.file || file);
             currentFileUrl = url;
 
             const isVideo = file.type.startsWith('video/');
-
-            fileName.textContent = file.name;
-            fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-            fileBar.classList.add('visible');
 
             playerContainer.innerHTML = '';
             const player = document.createElement(isVideo ? 'video' : 'audio');
@@ -861,6 +1154,11 @@
             playerWrapper.classList.add('visible');
             settingsRow.classList.add('visible');
 
+            // Генерируем волны из файла
+            generateWaveformFromFile(file.file || file).then(() => {
+                drawWaveform(currentGain);
+            });
+
             player.addEventListener('loadedmetadata', () => {
                 duration = player.duration;
                 if (duration && isFinite(duration)) {
@@ -868,9 +1166,7 @@
                     updateTimeline();
                     durationDisplay.textContent = formatTime(duration);
                     trimEndInput.value = formatTime(duration);
-                    trimBtn.disabled = false;
-                    videoToAudioBtn.disabled = false;
-                    addLog(`📊 Длительность: ${formatTime(duration)}`, 'info');
+                    addLog(`📊 ${file.name}: ${formatTime(duration)}`, 'info');
                 }
             });
 
@@ -887,26 +1183,43 @@
             player.addEventListener('pause', () => { isPlaying = false;
                 playBtn.textContent = '▶'; });
 
-            // Устанавливаем начальную громкость
-            applyGain(1);
-
-            addLog(`✅ Загружен: ${file.name}`, 'success');
-            updateTimeline();
+            applyGain(currentGain);
+            updateFileList();
         }
 
-        // === УПРАВЛЕНИЕ ГРОМКОСТЬЮ (реальное время) ===
+        // === ЗАГРУЗКА ФАЙЛОВ ===
+        function loadFiles(fileList) {
+            for (const file of fileList) {
+                if (!file.type.startsWith('video/') && !file.type.startsWith('audio/')) {
+                    addLog(`⚠️ ${file.name} — неподдерживаемый формат`, 'warning');
+                    continue;
+                }
+                files.push({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    file: file,
+                    status: 'готов'
+                });
+            }
+            if (files.length > 0) {
+                loadFileByIndex(0);
+                updateFileList();
+                fileBar.classList.add('visible');
+                addLog(`✅ Загружено файлов: ${files.length}`, 'success');
+            }
+        }
+
+        // === УПРАВЛЕНИЕ ГРОМКОСТЬЮ ===
         function applyGain(gain) {
             const player = window.mediaPlayer;
             if (player) {
                 player.volume = Math.min(1, gain);
-                const percent = Math.round(gain * 100);
                 gainLabel.textContent = gain.toFixed(1) + 'x';
-                if (gain === 0) {
-                    muteBtn.textContent = '🔈';
-                } else {
-                    muteBtn.textContent = '🔊';
-                }
+                muteBtn.textContent = gain === 0 ? '🔈' : '🔊';
             }
+            // Обновляем волны при изменении громкости
+            drawWaveform(gain);
         }
 
         gainSlider.addEventListener('input', () => {
@@ -935,10 +1248,13 @@
             const startPercent = (trimStart / duration) * 100;
             const endPercent = (trimEnd / duration) * 100;
 
-            trimRegion.style.left = startPercent + '%';
-            trimRegion.style.width = (endPercent - startPercent) + '%';
-            trimHandleLeft.style.left = startPercent + '%';
-            trimHandleRight.style.left = endPercent + '%';
+            const clampedEnd = Math.min(endPercent, 100);
+            const clampedStart = Math.max(startPercent, 0);
+
+            trimRegion.style.left = clampedStart + '%';
+            trimRegion.style.width = (clampedEnd - clampedStart) + '%';
+            trimHandleLeft.style.left = clampedStart + '%';
+            trimHandleRight.style.left = clampedEnd + '%';
             timeLabelStart.textContent = formatTime(trimStart);
             timeLabelEnd.textContent = formatTime(trimEnd);
         }
@@ -1010,56 +1326,54 @@
             if (!isPlaying) player.play();
         });
 
-        // === УДАЛЕНИЕ ===
-        closeBtn.addEventListener('click', () => {
-            showModal('Удалить файл? Все изменения будут потеряны.', () => {
-                resetAll();
-                addLog('🗑️ Файл удалён', 'info');
-            });
-        });
-
         // === СБРОС ===
-        resetBtn.addEventListener('click', () => {
-            showModal('Сбросить все изменения?', () => {
-                const player = window.mediaPlayer;
-                if (player && duration) {
-                    trimStart = 0;
-                    trimEnd = duration;
-                    trimStartInput.value = '00:00';
-                    trimEndInput.value = formatTime(duration);
-                    gainSlider.value = 100;
-                    currentGain = 1;
-                    applyGain(1);
-                    updateTimeline();
-                    addLog('🔄 Изменения сброшены', 'info');
-                }
-            });
-        });
-
         function resetAll() {
             if (currentFileUrl) URL.revokeObjectURL(currentFileUrl);
-            currentFile = null;
             currentFileUrl = null;
             window.mediaPlayer = null;
             duration = 0;
             trimStart = 0;
             trimEnd = 0;
+            audioData = null;
             playerWrapper.classList.remove('visible');
             settingsRow.classList.remove('visible');
             fileBar.classList.remove('visible');
+            fileList.classList.remove('visible');
             log.classList.remove('visible');
             log.innerHTML = '';
             fileInput.value = '';
             progressSection.classList.remove('visible');
             trimBtn.disabled = true;
             videoToAudioBtn.disabled = true;
+            batchVolumeBtn.disabled = true;
+            files = [];
+            currentFileIndex = 0;
+            // Очищаем волны
+            const ctx = waveformCanvas.getContext('2d');
+            ctx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
         }
 
-        // === ОБРАБОТКА ===
-        async function processMedia(start, end, gain, extractAudio = false) {
+        resetBtn.addEventListener('click', () => {
+            if (files.length === 0) return;
+            showModal('Сбросить всё? Все загруженные файлы будут удалены.', () => {
+                resetAll();
+                addLog('🔄 Сброшено', 'info');
+            });
+        });
+
+        closeBtn.addEventListener('click', () => {
+            if (files.length === 0) return;
+            showModal('Удалить все файлы?', () => {
+                resetAll();
+                addLog('🗑️ Все файлы удалены', 'info');
+            });
+        });
+
+        // === ОБРАБОТКА (ФИКС КОДЕКА) ===
+        async function processSingleFile(file, start, end, gain, extractAudio = false) {
             return new Promise((resolve, reject) => {
                 const video = document.createElement('video');
-                video.src = URL.createObjectURL(currentFile);
+                video.src = URL.createObjectURL(file.file || file);
                 video.muted = true;
                 video.crossOrigin = 'anonymous';
 
@@ -1069,7 +1383,7 @@
                         const s = Math.max(0, start);
                         const e = Math.min(dur, end || dur);
                         const size = parseInt(previewSize.value);
-                        const isVideo = currentFile.type.startsWith('video/');
+                        const isVideo = file.type.startsWith('video/');
                         const width = isVideo ? Math.min(video.videoWidth || 640, size) : 640;
                         const height = isVideo ? Math.min(video.videoHeight || 360, Math.round(size * 0.5625)) : 100;
 
@@ -1095,7 +1409,8 @@
                         dest.stream.getTracks().forEach(t => combined.addTrack(t));
 
                         const chunks = [];
-                        const mimeType = extractAudio ? 'audio/webm' : 'video/webm;codecs=vp9,opus';
+                        // ФИКС: используем AAC вместо Opus для лучшей совместимости
+                        const mimeType = extractAudio ? 'audio/webm' : 'video/webm;codecs=vp9,aac';
                         const recorder = new MediaRecorder(combined, { mimeType });
 
                         recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
@@ -1106,7 +1421,6 @@
                                 const convertedBlob = await convertBlob(blob, extractAudio);
                                 resolve(convertedBlob);
                             } catch (convErr) {
-                                addLog('⚠️ Конвертация не удалась, сохранено в WebM', 'warning');
                                 resolve(blob);
                             }
                             video.remove();
@@ -1165,7 +1479,6 @@
         async function convertBlob(blob, toAudio) {
             return new Promise((resolve) => {
                 const url = URL.createObjectURL(blob);
-                
                 if (toAudio) {
                     const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                     fetch(url)
@@ -1246,7 +1559,7 @@
             const bufferLength = 44 + dataLength;
             const arrayBuffer = new ArrayBuffer(bufferLength);
             const view = new DataView(arrayBuffer);
-            
+
             writeString(view, 0, 'RIFF');
             view.setUint32(4, bufferLength - 8, true);
             writeString(view, 8, 'WAVE');
@@ -1260,7 +1573,7 @@
             view.setUint16(34, 16, true);
             writeString(view, 36, 'data');
             view.setUint32(40, dataLength, true);
-            
+
             let offset = 44;
             for (let i = 0; i < samples.length; i++) {
                 view.setInt16(offset, samples[i] * 0x7FFF, true);
@@ -1275,8 +1588,7 @@
             }
         }
 
-        function downloadFile(blob, suffix, ext) {
-            const baseName = currentFile.name.replace(/\.[^/.]+$/, '');
+        function downloadFile(blob, suffix, ext, baseName) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1298,52 +1610,97 @@
             progressText.textContent = `Обработка... ${Math.min(value, 100)}%`;
         }
 
-        // === КНОПКИ ДЕЙСТВИЙ ===
-        async function handleAction(action) {
-            if (!currentFile || isProcessing) {
-                addLog('⚠️ Сначала загрузи файл', 'warning');
+        // === ДЕЙСТВИЯ ===
+        async function handleAction(action, targetFiles) {
+            if (isProcessing) return;
+            if (!targetFiles || targetFiles.length === 0) {
+                addLog('⚠️ Нет файлов для обработки', 'warning');
                 return;
             }
+
             const start = trimStart;
             const end = trimEnd;
-            if (end - start <= 0.5) {
-                addLog('❌ Выбери фрагмент длиннее 0.5 секунд', 'error');
-                return;
-            }
+            const gain = currentGain;
 
             isProcessing = true;
             const actionNames = {
                 trim: '✂️ Обрезка',
-                audio: '🎵 Конвертация в аудио'
+                audio: '🎵 Конвертация в аудио',
+                batch: '🔊 Изменение громкости'
             };
-            const gain = currentGain;
-            addLog(`${actionNames[action]}: ${formatTime(start)} — ${formatTime(end)} (громкость ${gain.toFixed(1)}x)`, 'info');
+            addLog(`${actionNames[action] || action}: ${targetFiles.length} файлов`, 'info');
             showProgress(true);
 
-            try {
-                let result;
-                if (action === 'audio') {
-                    result = await processMedia(start, end, gain, true);
-                    const ext = result.type === 'audio/wav' ? 'wav' : result.type === 'audio/mpeg' ? 'mp3' : 'webm';
-                    downloadFile(result, '_audio', ext);
-                } else {
-                    result = await processMedia(start, end, gain, false);
-                    const ext = result.type === 'video/mp4' ? 'mp4' : 'webm';
-                    downloadFile(result, '_trimmed', ext);
+            let successCount = 0;
+            let failCount = 0;
+
+            for (let i = 0; i < targetFiles.length; i++) {
+                const f = targetFiles[i];
+                f.status = 'обработка...';
+                updateFileList();
+
+                try {
+                    let result;
+                    let ext = 'mp4';
+                    let suffix = '';
+
+                    if (action === 'audio') {
+                        result = await processSingleFile(f, start, end, gain, true);
+                        ext = result.type === 'audio/wav' ? 'wav' : result.type === 'audio/mpeg' ? 'mp3' : 'webm';
+                        suffix = '_audio';
+                    } else if (action === 'trim') {
+                        result = await processSingleFile(f, start, end, gain, false);
+                        ext = result.type === 'video/mp4' ? 'mp4' : 'webm';
+                        suffix = '_trimmed';
+                    } else if (action === 'batch') {
+                        result = await processSingleFile(f, 0, 0, gain, false);
+                        ext = 'mp4';
+                        suffix = '_vol';
+                    }
+
+                    const baseName = f.name.replace(/\.[^/.]+$/, '');
+                    downloadFile(result, suffix, ext, baseName);
+                    f.status = 'done';
+                    successCount++;
+                } catch (err) {
+                    f.status = 'error';
+                    failCount++;
+                    addLog(`❌ Ошибка: ${f.name} — ${err.message}`, 'error');
                 }
-                addLog(`✅ ${actionNames[action]} завершена!`, 'success');
-            } catch (err) {
-                addLog(`❌ Ошибка: ${err.message}`, 'error');
-                console.error(err);
+                updateFileList();
             }
+
             showProgress(false);
             isProcessing = false;
+            addLog(`✅ Готово: успешно ${successCount}, ошибок ${failCount}`, 'success');
         }
 
-        trimBtn.addEventListener('click', () => handleAction('trim'));
-        videoToAudioBtn.addEventListener('click', () => handleAction('audio'));
+        // === КНОПКИ ===
+        trimBtn.addEventListener('click', () => {
+            if (files.length !== 1) {
+                addLog('⚠️ Обрезка доступна только для одного файла', 'warning');
+                return;
+            }
+            handleAction('trim', [files[currentFileIndex]]);
+        });
 
-        // === ЗАГРУЗКА ===
+        videoToAudioBtn.addEventListener('click', () => {
+            if (files.length !== 1) {
+                addLog('⚠️ Конвертация доступна только для одного файла', 'warning');
+                return;
+            }
+            handleAction('audio', [files[currentFileIndex]]);
+        });
+
+        batchVolumeBtn.addEventListener('click', () => {
+            if (files.length < 2) {
+                addLog('⚠️ Нужно загрузить минимум 2 файла', 'warning');
+                return;
+            }
+            handleAction('batch', files);
+        });
+
+        // === ЗАГРУЗКА ЧЕРЕЗ UI ===
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', (e) => { e.preventDefault();
             uploadArea.style.borderColor = '#667eea'; });
@@ -1351,11 +1708,24 @@
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.style.borderColor = 'rgba(255,255,255,0.2)';
-            if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+            if (e.dataTransfer.files.length) {
+                loadFiles(e.dataTransfer.files);
+            }
         });
-        fileInput.addEventListener('change', () => { if (fileInput.files.length) loadFile(fileInput.files[0]); });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                loadFiles(fileInput.files);
+                fileInput.value = '';
+            }
+        });
 
-        addLog('🎬 Редактор загружен! Загрузи файл для начала работы.', 'info');
+        // === ПЕРЕРИСОВКА ВОЛН ПРИ ИЗМЕНЕНИИ РАЗМЕРА ===
+        window.addEventListener('resize', () => {
+            drawWaveform(currentGain);
+        });
+
+        addLog('🎬 Редактор загружен! Загрузи файлы для начала работы.', 'info');
+        updateFileList();
     </script>
 </body>
 </html>
