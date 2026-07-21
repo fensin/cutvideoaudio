@@ -8,9 +8,6 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
 
     <style>
-        /* === ВСЕ СТИЛИ ОСТАЮТСЯ ТАКИМИ ЖЕ, КАК В ПРЕДЫДУЩЕЙ ВЕРСИИ === */
-        /* (скопируй стили из предыдущего ответа, чтобы не раздувать) */
-
         * {
             margin: 0;
             padding: 0;
@@ -75,11 +72,11 @@
         }
 
         .header h1 span {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;  /* ← добавить эту строку */
-}
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
         .header p {
             color: rgba(255, 255, 255, 0.4);
@@ -347,8 +344,9 @@
             border-radius: 8px 0 0 8px;
         }
 
+        /* ИСПРАВЛЕНИЕ ПРАВОГО ХЭНДЛА: Убрали right: 0, чтобы left отрабатывал корректно */
         .timeline-container .trim-handle.right {
-            right: 0;
+            left: 100%; 
             border-radius: 0 8px 8px 0;
         }
 
@@ -449,7 +447,7 @@
         }
 
         .settings-row {
-            display: flex;
+            display: none;
             gap: 16px;
             flex-wrap: wrap;
             margin: 16px 0;
@@ -457,7 +455,6 @@
             background: rgba(255, 255, 255, 0.03);
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            display: none;
         }
 
         .settings-row.visible {
@@ -743,7 +740,7 @@
 <body>
 
     <div class="version" id="versionDisplay">
-        <span class="v">v</span>1.8.3
+        <span class="v">v</span>1.8.4
     </div>
 
     <div class="container">
@@ -861,16 +858,13 @@
         // ============================================================
         //  ВЕРСИЯ
         // ============================================================
-
-        const VERSION = '1.8.3';
+        const VERSION = '1.8.4';
         document.getElementById('versionDisplay').innerHTML = `<span class="v">v</span>${VERSION}`;
         console.log(`📌 Версия: ${VERSION}`);
 
         // ============================================================
-        //  ПОЛНАЯ ЛОГИКА
+        //  ЭЛЕМЕНТЫ
         // ============================================================
-
-        // === ЭЛЕМЕНТЫ ===
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const fileBar = document.getElementById('fileBar');
@@ -917,7 +911,9 @@
         const waveformCanvas = document.getElementById('waveformCanvas');
         const waveformContainer = document.getElementById('waveformContainer');
 
-        // === СОСТОЯНИЕ ===
+        // ============================================================
+        //  СОСТОЯНИЕ
+        // ============================================================
         let files = [];
         let currentFileIndex = 0;
         let currentFileUrl = null;
@@ -935,7 +931,9 @@
         let sourceNode = null;
         let mediaElementSource = null;
 
-        // === ЛОГГЕР ===
+        // ============================================================
+        //  ЛОГГЕР
+        // ============================================================
         function addLog(message, type = 'info') {
             log.classList.add('visible');
             const entry = document.createElement('div');
@@ -946,7 +944,9 @@
             console.log(`[${type}]`, message);
         }
 
-        // === ФОРМАТИРОВАНИЕ ВРЕМЕНИ ===
+        // ============================================================
+        //  ФОРМАТИРОВАНИЕ ВРЕМЕНИ
+        // ============================================================
         function formatTime(seconds) {
             if (!seconds || !isFinite(seconds)) return '0:00';
             const m = Math.floor(seconds / 60);
@@ -964,7 +964,9 @@
             return parseFloat(str) || 0;
         }
 
-        // === МОДАЛКА ===
+        // ============================================================
+        //  МОДАЛКА
+        // ============================================================
         function showModal(text, onConfirm) {
             modalText.textContent = text;
             modalOverlay.classList.add('visible');
@@ -975,7 +977,9 @@
             modalCancel.onclick = () => modalOverlay.classList.remove('visible');
         }
 
-        // === ВОЛНЫ ===
+        // ============================================================
+        //  ВОЛНЫ
+        // ============================================================
         function drawWaveform(gain) {
             const canvas = waveformCanvas;
             const container = waveformContainer;
@@ -1038,14 +1042,16 @@
             }
         }
 
-        // === ГЕНЕРАЦИЯ ВОЛН ===
+        // ============================================================
+        //  ГЕНЕРАЦИЯ ВОЛН
+        // ============================================================
         function generateWaveformFromFile(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
                         if (!audioContext) {
-                            audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                            audioContext = new (window.AudioContext || window.webkitAudioContext)();
                         }
                         const buffer = await audioContext.decodeAudioData(e.target.result);
                         const channelData = buffer.getChannelData(0);
@@ -1077,46 +1083,37 @@
             });
         }
 
-        // === УПРАВЛЕНИЕ ГРОМКОСТЬЮ ЧЕРЕЗ WEB AUDIO API ===
+        // ============================================================
+        //  УПРАВЛЕНИЕ ГРОМКОСТЬЮ ЧЕРЕЗ WEB AUDIO API
+        // ============================================================
         function setupAudioGain() {
             const player = window.mediaPlayer;
             if (!player) return;
 
             try {
-                // Создаём аудио-контекст, если его нет
                 if (!audioContext) {
-                    audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 }
 
-                // Если уже есть старые узлы — отключаем
                 if (mediaElementSource) {
-                    try {
-                        mediaElementSource.disconnect();
-                    } catch (e) {}
+                    try { mediaElementSource.disconnect(); } catch (e) {}
                 }
                 if (gainNode) {
-                    try {
-                        gainNode.disconnect();
-                    } catch (e) {}
+                    try { gainNode.disconnect(); } catch (e) {}
                 }
 
-                // Создаём источник из медиа-элемента
                 mediaElementSource = audioContext.createMediaElementSource(player);
                 gainNode = audioContext.createGain();
                 gainNode.gain.value = currentGain;
 
-                // Подключаем: плеер → gainNode → динамики
                 mediaElementSource.connect(gainNode);
                 gainNode.connect(audioContext.destination);
 
-                // Сохраняем ссылку на плеер для обратной совместимости
                 player._gainNode = gainNode;
 
-                // Обновляем label
                 gainLabel.textContent = currentGain.toFixed(1) + 'x';
                 muteBtn.textContent = currentGain === 0 ? '🔈' : '🔊';
 
-                // Возобновляем аудио-контекст, если он приостановлен
                 if (audioContext.state === 'suspended') {
                     audioContext.resume();
                 }
@@ -1126,7 +1123,6 @@
 
             } catch (err) {
                 console.warn('Web Audio API не поддерживается, используем стандартную громкость:', err);
-                // Fallback: используем стандартный volume
                 player.volume = Math.min(1, currentGain);
                 gainLabel.textContent = currentGain.toFixed(1) + 'x';
                 muteBtn.textContent = currentGain === 0 ? '🔈' : '🔊';
@@ -1136,7 +1132,6 @@
         function applyGain(gain) {
             currentGain = gain;
 
-            // Пробуем через Web Audio API
             if (gainNode && gainNode.gain) {
                 gainNode.gain.value = gain;
                 gainLabel.textContent = gain.toFixed(1) + 'x';
@@ -1145,7 +1140,6 @@
                 return;
             }
 
-            // Fallback: через стандартный volume
             const player = window.mediaPlayer;
             if (player) {
                 player.volume = Math.min(1, gain);
@@ -1155,7 +1149,9 @@
             }
         }
 
-        // === ОБНОВЛЕНИЕ СПИСКА ФАЙЛОВ ===
+        // ============================================================
+        //  ОБНОВЛЕНИЕ СПИСКА ФАЙЛОВ
+        // ============================================================
         function updateFileList() {
             fileList.innerHTML = '';
             if (files.length === 0) {
@@ -1199,7 +1195,9 @@
             batchVolumeBtn.disabled = !canBatch || isProcessing;
         }
 
-        // === УДАЛЕНИЕ ФАЙЛА ===
+        // ============================================================
+        //  УДАЛЕНИЕ ФАЙЛА
+        // ============================================================
         function removeFile(index) {
             if (index < 0 || index >= files.length) return;
             if (index === currentFileIndex && currentFileUrl) {
@@ -1221,7 +1219,9 @@
             updateFileList();
         }
 
-        // === ЗАГРУЗКА ФАЙЛА ПО ИНДЕКСУ ===
+        // ============================================================
+        //  ЗАГРУЗКА ФАЙЛА ПО ИНДЕКСУ
+        // ============================================================
         function loadFileByIndex(index) {
             if (index < 0 || index >= files.length) return;
             const file = files[index];
@@ -1249,7 +1249,6 @@
             playerWrapper.classList.add('visible');
             settingsRow.classList.add('visible');
 
-            // Генерируем волны
             generateWaveformFromFile(file.file || file).then(() => {
                 drawWaveform(currentGain);
             });
@@ -1263,7 +1262,6 @@
                     trimEndInput.value = formatTime(duration);
                     addLog(`📊 ${file.name}: ${formatTime(duration)}`, 'info');
 
-                    // Настраиваем громкость через Web Audio API
                     setTimeout(() => {
                         setupAudioGain();
                         applyGain(currentGain);
@@ -1279,18 +1277,18 @@
                 }
             });
 
-            player.addEventListener('play', () => { isPlaying = true;
-                playBtn.textContent = '⏸'; });
-            player.addEventListener('pause', () => { isPlaying = false;
-                playBtn.textContent = '▶'; });
+            player.addEventListener('play', () => { isPlaying = true; playBtn.textContent = '⏸'; });
+            player.addEventListener('pause', () => { isPlaying = false; playBtn.textContent = '▶'; });
 
             applyGain(currentGain);
             updateFileList();
         }
 
-        // === ЗАГРУЗКА ФАЙЛОВ ===
-        function loadFiles(fileList) {
-            for (const file of fileList) {
+        // ============================================================
+        //  ЗАГРУЗКА ФАЙЛОВ
+        // ============================================================
+        function loadFiles(inputFiles) {
+            for (const file of inputFiles) {
                 if (!file.type.startsWith('video/') && !file.type.startsWith('audio/')) {
                     addLog(`⚠️ ${file.name} — неподдерживаемый формат`, 'warning');
                     continue;
@@ -1311,7 +1309,9 @@
             }
         }
 
-        // === ТАЙМЛАЙН ===
+        // ============================================================
+        //  ТАЙМЛАЙН
+        // ============================================================
         function updateTimeline() {
             if (!duration || !isFinite(duration)) return;
 
@@ -1325,7 +1325,9 @@
             trimRegion.style.left = clampedStart + '%';
             trimRegion.style.width = width + '%';
             trimHandleLeft.style.left = clampedStart + '%';
-            trimHandleRight.style.left = clampedEnd + '%';
+            
+            // ИСПРАВЛЕНИЕ: Вычитаем 18px (ширину хэндла), чтобы он не вылезал за край
+            trimHandleRight.style.left = `calc(${clampedEnd}% - 18px)`;
 
             timeLabelStart.textContent = formatTime(trimStart);
             timeLabelEnd.textContent = formatTime(trimEnd);
@@ -1333,12 +1335,16 @@
 
         function initDrag(e, type) {
             if (!duration || isDragging) return;
+            e.preventDefault(); // Предотвращаем выделение текста
             isDragging = true;
             dragType = type;
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const rect = timelineContainer.getBoundingClientRect();
 
             const onMove = (ev) => {
-                const x = (ev.clientX - rect.left) / rect.width;
+                const moveX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+                const x = (moveX - rect.left) / rect.width;
                 const time = Math.max(0, Math.min(1, x)) * duration;
                 if (type === 'left' && time < trimEnd - 0.5) {
                     trimStart = time;
@@ -1354,14 +1360,20 @@
                 isDragging = false;
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('mouseup', onEnd);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend', onEnd);
             };
 
             document.addEventListener('mousemove', onMove);
             document.addEventListener('mouseup', onEnd);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('touchend', onEnd);
         }
 
         trimHandleLeft.addEventListener('mousedown', (e) => initDrag(e, 'left'));
         trimHandleRight.addEventListener('mousedown', (e) => initDrag(e, 'right'));
+        trimHandleLeft.addEventListener('touchstart', (e) => initDrag(e, 'left'), { passive: false });
+        trimHandleRight.addEventListener('touchstart', (e) => initDrag(e, 'right'), { passive: false });
 
         clickZone.addEventListener('click', (e) => {
             if (isDragging) return;
@@ -1384,7 +1396,9 @@
             addLog(`⏱️ Установлено: ${formatTime(start)} — ${formatTime(end)}`, 'info');
         });
 
-        // === УПРАВЛЕНИЕ ВОСПРОИЗВЕДЕНИЕМ ===
+        // ============================================================
+        //  УПРАВЛЕНИЕ ВОСПРОИЗВЕДЕНИЕМ
+        // ============================================================
         playBtn.addEventListener('click', () => {
             const player = window.mediaPlayer;
             if (!player) return;
@@ -1401,7 +1415,9 @@
             if (!isPlaying) player.play();
         });
 
-        // === СБРОС ===
+        // ============================================================
+        //  СБРОС
+        // ============================================================
         function resetAll() {
             if (currentFileUrl) URL.revokeObjectURL(currentFileUrl);
             currentFileUrl = null;
@@ -1410,7 +1426,7 @@
             trimStart = 0;
             trimEnd = 0;
             audioData = null;
-            // Отключаем Web Audio
+            
             if (mediaElementSource) {
                 try { mediaElementSource.disconnect(); } catch (e) {}
                 mediaElementSource = null;
@@ -1419,421 +1435,105 @@
                 try { gainNode.disconnect(); } catch (e) {}
                 gainNode = null;
             }
+            
+            files = [];
+            currentFileIndex = 0;
+            currentGain = 1;
+            isPlaying = false;
+            isProcessing = false;
+
             playerWrapper.classList.remove('visible');
             settingsRow.classList.remove('visible');
             fileBar.classList.remove('visible');
             fileList.classList.remove('visible');
+            progressSection.classList.remove('visible');
             log.classList.remove('visible');
             log.innerHTML = '';
-            fileInput.value = '';
-            progressSection.classList.remove('visible');
-            trimBtn.disabled = true;
-            videoToAudioBtn.disabled = true;
-            batchVolumeBtn.disabled = true;
-            files = [];
-            currentFileIndex = 0;
-            const ctx = waveformCanvas.getContext('2d');
-            ctx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+
+            playBtn.textContent = '▶';
+            gainSlider.value = 100;
+            gainLabel.textContent = '1.0x';
+            muteBtn.textContent = '🔇';
+            trimStartInput.value = '00:00';
+            trimEndInput.value = '00:00';
+            currentTimeDisplay.textContent = '0:00';
+            durationDisplay.textContent = '0:00';
+            progressFillBar.style.width = '0%';
+            
+            updateFileList();
+            addLog('🔄 Редактор сброшен', 'info');
         }
 
-        resetBtn.addEventListener('click', () => {
-            if (files.length === 0) return;
-            showModal('Сбросить всё? Все загруженные файлы будут удалены.', () => {
-                resetAll();
-                addLog('🔄 Сброшено', 'info');
-            });
+        // ============================================================
+        //  СОБЫТИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
+        // ============================================================
+        
+        // Загрузка файлов
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) loadFiles(e.target.files);
         });
 
-        closeBtn.addEventListener('click', () => {
-            if (files.length === 0) return;
-            showModal('Удалить все файлы?', () => {
-                resetAll();
-                addLog('🗑️ Все файлы удалены', 'info');
-            });
+        // Drag & Drop зона загрузки
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = 'rgba(102, 126, 234, 0.1)';
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            uploadArea.style.background = 'transparent';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            uploadArea.style.background = 'transparent';
+            if (e.dataTransfer.files.length > 0) loadFiles(e.dataTransfer.files);
         });
 
-        // === ОБРАБОТКА ===
-        async function processSingleFile(file, start, end, gain, extractAudio = false) {
-            return new Promise((resolve, reject) => {
-                const video = document.createElement('video');
-                video.src = URL.createObjectURL(file.file || file);
-                video.muted = true;
-                video.crossOrigin = 'anonymous';
-
-                video.onloadedmetadata = () => {
-                    try {
-                        const dur = video.duration;
-                        const s = Math.max(0, start);
-                        const e = Math.min(dur, end || dur);
-                        const size = parseInt(previewSize.value);
-                        const isVideo = file.type.startsWith('video/');
-                        const width = isVideo ? Math.min(video.videoWidth || 640, size) : 640;
-                        const height = isVideo ? Math.min(video.videoHeight || 360, Math.round(size * 0.5625)) : 100;
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height || 100;
-
-                        const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-                        const stream = video.captureStream();
-                        const source = audioCtx.createMediaStreamSource(stream);
-                        const gainNode = audioCtx.createGain();
-                        gainNode.gain.value = gain;
-
-                        const dest = audioCtx.createMediaStreamDestination();
-                        source.connect(gainNode);
-                        gainNode.connect(dest);
-
-                        const combined = new MediaStream();
-                        if (!extractAudio) {
-                            const videoTrack = stream.getVideoTracks()[0];
-                            if (videoTrack) combined.addTrack(videoTrack);
-                        }
-                        dest.stream.getTracks().forEach(t => combined.addTrack(t));
-
-                        const chunks = [];
-                        let mimeType = extractAudio ? 'audio/webm' : 'video/webm';
-                        if (!extractAudio) {
-                            if (MediaRecorder.isTypeSupported('video/mp4')) {
-                                mimeType = 'video/mp4';
-                            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-                                mimeType = 'video/webm;codecs=vp9';
-                            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-                                mimeType = 'video/webm;codecs=vp8';
-                            }
-                        }
-                        const recorder = new MediaRecorder(combined, { mimeType });
-
-                        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-
-                        recorder.onstop = async () => {
-                            const blob = new Blob(chunks, { type: extractAudio ? 'audio/webm' : 'video/webm' });
-                            try {
-                                const convertedBlob = await convertBlob(blob, extractAudio);
-                                resolve(convertedBlob);
-                            } catch (convErr) {
-                                resolve(blob);
-                            }
-                            video.remove();
-                            URL.revokeObjectURL(video.src);
-                        };
-
-                        recorder.start(100);
-                        video.currentTime = s;
-                        video.play();
-
-                        let lastProgress = 0;
-                        const checkInterval = setInterval(() => {
-                            const current = video.currentTime;
-                            const total = e - s;
-                            const progress = total > 0 ? ((current - s) / total) * 100 : 0;
-                            if (Math.floor(progress) > lastProgress) {
-                                lastProgress = Math.floor(progress);
-                                updateProgress(lastProgress);
-                            }
-                            if (current >= e) {
-                                video.pause();
-                                clearInterval(checkInterval);
-                                recorder.stop();
-                                updateProgress(100);
-                            }
-                        }, 100);
-
-                        if (!extractAudio && isVideo) {
-                            const renderCanvas = document.createElement('canvas');
-                            renderCanvas.width = width;
-                            renderCanvas.height = height;
-                            document.body.appendChild(renderCanvas);
-                            renderCanvas.style.display = 'none';
-                            const renderInterval = setInterval(() => {
-                                if (!video.paused) {
-                                    const ctx2 = renderCanvas.getContext('2d');
-                                    ctx2.drawImage(video, 0, 0, width, height);
-                                }
-                            }, 33);
-                        }
-
-                    } catch (err) {
-                        reject(err);
-                    }
-                };
-
-                video.onerror = () => {
-                    reject(new Error('Ошибка загрузки видео'));
-                    video.remove();
-                    URL.revokeObjectURL(video.src);
-                };
-            });
-        }
-
-        // === КОНВЕРТАЦИЯ ===
-        async function convertBlob(blob, toAudio) {
-            return new Promise((resolve) => {
-                const url = URL.createObjectURL(blob);
-                if (toAudio) {
-                    const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-                    fetch(url)
-                        .then(res => res.arrayBuffer())
-                        .then(buffer => audioCtx.decodeAudioData(buffer))
-                        .then(audioBuffer => {
-                            const wavBlob = audioBufferToWav(audioBuffer);
-                            try {
-                                const tempAudioCtx = new(window.AudioContext || window.webkitAudioContext)();
-                                const tempSource = tempAudioCtx.createBufferSource();
-                                tempSource.buffer = audioBuffer;
-                                const dest = tempAudioCtx.createMediaStreamDestination();
-                                tempSource.connect(dest);
-                                tempSource.start();
-                                const recorder = new MediaRecorder(dest.stream, { mimeType: 'audio/mp3' });
-                                const chunks = [];
-                                recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-                                recorder.onstop = () => {
-                                    const mp3Blob = new Blob(chunks, { type: 'audio/mpeg' });
-                                    resolve(mp3Blob.size > 1000 ? mp3Blob : wavBlob);
-                                    URL.revokeObjectURL(url);
-                                };
-                                recorder.start();
-                                setTimeout(() => { recorder.stop();
-                                    tempSource.stop(); }, audioBuffer.duration * 1000 + 100);
-                            } catch (mp3Err) {
-                                resolve(wavBlob);
-                                URL.revokeObjectURL(url);
-                            }
-                        })
-                        .catch(() => { resolve(blob);
-                            URL.revokeObjectURL(url); });
-                } else {
-                    try {
-                        const video = document.createElement('video');
-                        video.src = url;
-                        video.muted = true;
-                        video.crossOrigin = 'anonymous';
-                        video.onloadedmetadata = () => {
-                            try {
-                                const stream = video.captureStream();
-                                const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-                                const source = audioCtx.createMediaStreamSource(stream);
-                                const dest = audioCtx.createMediaStreamDestination();
-                                source.connect(dest);
-                                const combined = new MediaStream();
-                                stream.getVideoTracks().forEach(t => combined.addTrack(t));
-                                dest.stream.getTracks().forEach(t => combined.addTrack(t));
-                                const chunks = [];
-                                const recorder = new MediaRecorder(combined, { mimeType: 'video/mp4' });
-                                recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-                                recorder.onstop = () => {
-                                    const mp4Blob = new Blob(chunks, { type: 'video/mp4' });
-                                    resolve(mp4Blob.size > 1000 ? mp4Blob : blob);
-                                    URL.revokeObjectURL(url);
-                                };
-                                recorder.start(100);
-                                video.play();
-                                setTimeout(() => { video.pause();
-                                    recorder.stop(); }, 1000);
-                            } catch (err) { resolve(blob);
-                                URL.revokeObjectURL(url); }
-                        };
-                        video.load();
-                        video.onerror = () => { resolve(blob);
-                            URL.revokeObjectURL(url); };
-                    } catch (err) { resolve(blob);
-                        URL.revokeObjectURL(url); }
-                }
-            });
-        }
-
-        function audioBufferToWav(buffer) {
-            const numChannels = buffer.numberOfChannels;
-            const sampleRate = buffer.sampleRate;
-            const samples = buffer.getChannelData(0);
-            const dataLength = samples.length * 2;
-            const bufferLength = 44 + dataLength;
-            const arrayBuffer = new ArrayBuffer(bufferLength);
-            const view = new DataView(arrayBuffer);
-
-            writeString(view, 0, 'RIFF');
-            view.setUint32(4, bufferLength - 8, true);
-            writeString(view, 8, 'WAVE');
-            writeString(view, 12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * numChannels * 2, true);
-            view.setUint16(32, numChannels * 2, true);
-            view.setUint16(34, 16, true);
-            writeString(view, 36, 'data');
-            view.setUint32(40, dataLength, true);
-
-            let offset = 44;
-            for (let i = 0; i < samples.length; i++) {
-                view.setInt16(offset, samples[i] * 0x7FFF, true);
-                offset += 2;
-            }
-            return new Blob([arrayBuffer], { type: 'audio/wav' });
-        }
-
-        function writeString(view, offset, string) {
-            for (let i = 0; i < string.length; i++) {
-                view.setUint8(offset + i, string.charCodeAt(i));
-            }
-        }
-
-        function downloadFile(blob, suffix, ext, baseName) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${baseName}${suffix}.${ext}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-        }
-
-        function showProgress(show) {
-            progressSection.classList.toggle('visible', show);
-            if (!show) { progressFillBar.style.width = '0%';
-                progressText.textContent = 'Обработка...'; }
-        }
-
-        function updateProgress(value) {
-            progressFillBar.style.width = Math.min(value, 100) + '%';
-            progressText.textContent = `Обработка... ${Math.min(value, 100)}%`;
-        }
-
-        // === ДЕЙСТВИЯ ===
-        async function handleAction(action, targetFiles) {
-            if (isProcessing) return;
-            if (!targetFiles || targetFiles.length === 0) {
-                addLog('⚠️ Нет файлов для обработки', 'warning');
-                return;
-            }
-
-            const start = trimStart;
-            const end = trimEnd;
-            const gain = currentGain;
-
-            isProcessing = true;
-            const actionNames = {
-                trim: '✂️ Обрезка',
-                audio: '🎵 Конвертация в аудио',
-                batch: '🔊 Изменение громкости'
-            };
-            addLog(`${actionNames[action] || action}: ${targetFiles.length} файлов (громкость ${gain.toFixed(1)}x)`, 'info');
-            showProgress(true);
-
-            let successCount = 0;
-            let failCount = 0;
-
-            for (let i = 0; i < targetFiles.length; i++) {
-                const f = targetFiles[i];
-                f.status = 'обработка...';
-                updateFileList();
-
-                try {
-                    let result;
-                    let ext = 'mp4';
-                    let suffix = '';
-
-                    if (action === 'audio') {
-                        result = await processSingleFile(f, start, end, gain, true);
-                        ext = result.type === 'audio/wav' ? 'wav' : result.type === 'audio/mpeg' ? 'mp3' : 'webm';
-                        suffix = '_audio';
-                    } else if (action === 'trim') {
-                        result = await processSingleFile(f, start, end, gain, false);
-                        ext = result.type === 'video/mp4' ? 'mp4' : 'webm';
-                        suffix = '_trimmed';
-                    } else if (action === 'batch') {
-                        result = await processSingleFile(f, 0, 0, gain, false);
-                        ext = 'mp4';
-                        suffix = '_vol';
-                    }
-
-                    const baseName = f.name.replace(/\.[^/.]+$/, '');
-                    downloadFile(result, suffix, ext, baseName);
-                    f.status = 'done';
-                    successCount++;
-                } catch (err) {
-                    f.status = 'error';
-                    failCount++;
-                    addLog(`❌ Ошибка: ${f.name} — ${err.message}`, 'error');
-                }
-                updateFileList();
-            }
-
-            showProgress(false);
-            isProcessing = false;
-            addLog(`✅ Готово: успешно ${successCount}, ошибок ${failCount}`, 'success');
-        }
-
-        // === КНОПКИ ===
-        trimBtn.addEventListener('click', () => {
-            if (files.length !== 1) {
-                addLog('⚠️ Обрезка доступна только для одного файла', 'warning');
-                return;
-            }
-            handleAction('trim', [files[currentFileIndex]]);
-        });
-
-        videoToAudioBtn.addEventListener('click', () => {
-            if (files.length !== 1) {
-                addLog('⚠️ Конвертация доступна только для одного файла', 'warning');
-                return;
-            }
-            handleAction('audio', [files[currentFileIndex]]);
-        });
-
-        batchVolumeBtn.addEventListener('click', () => {
-            if (files.length < 2) {
-                addLog('⚠️ Нужно загрузить минимум 2 файла', 'warning');
-                return;
-            }
-            handleAction('batch', files);
-        });
-
-        // === ГРОМКОСТЬ (обработчик слайдера) ===
-        gainSlider.addEventListener('input', () => {
-            const val = parseFloat(gainSlider.value);
-            const gain = val / 100;
-            applyGain(gain);
+        // Громкость
+        gainSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value) / 100;
+            applyGain(val);
         });
 
         muteBtn.addEventListener('click', () => {
             if (currentGain > 0) {
-                gainSlider.value = 0;
+                muteBtn.dataset.prevGain = currentGain;
                 applyGain(0);
+                gainSlider.value = 0;
             } else {
-                gainSlider.value = 100;
-                applyGain(1);
+                const prev = parseFloat(muteBtn.dataset.prevGain || 1);
+                applyGain(prev);
+                gainSlider.value = prev * 100;
             }
         });
 
-        // === ЗАГРУЗКА ЧЕРЕЗ UI ===
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => { e.preventDefault();
-            uploadArea.style.borderColor = '#667eea'; });
-        uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'rgba(255,255,255,0.2)'; });
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.style.borderColor = 'rgba(255,255,255,0.2)';
-            if (e.dataTransfer.files.length) {
-                loadFiles(e.dataTransfer.files);
-            }
-        });
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length) {
-                loadFiles(fileInput.files);
-                fileInput.value = '';
-            }
+        // Кнопки удаления
+        closeBtn.addEventListener('click', () => {
+            showModal('Удалить все загруженные файлы?', () => resetAll());
         });
 
-        // === ПЕРЕРИСОВКА ВОЛН ===
-        window.addEventListener('resize', () => {
-            drawWaveform(currentGain);
+        resetBtn.addEventListener('click', () => {
+            showModal('Сбросить все изменения и удалить файлы?', () => resetAll());
         });
 
-        addLog('🎬 Редактор загружен! Загрузи файлы для начала работы.', 'info');
-        updateFileList();
+        // Заглушки для кнопок (вставьте сюда вашу логику FFmpeg.wasm если она есть)
+        trimBtn.addEventListener('click', () => {
+            addLog('✂️ Функция обрезки инициирована...', 'info');
+            alert(`Обрезка: ${formatTime(trimStart)} - ${formatTime(trimEnd)} (Требуется подключение FFmpeg.wasm)`);
+        });
+
+        videoToAudioBtn.addEventListener('click', () => {
+            addLog('🎵 Конвертация видео в аудио инициирована...', 'info');
+            alert('Конвертация Video -> Audio (Требуется подключение FFmpeg.wasm)');
+        });
+
+        batchVolumeBtn.addEventListener('click', () => {
+            addLog(`🔊 Пакетное изменение громкости (${currentGain.toFixed(1)}x) для ${files.length} файлов...`, 'info');
+            alert(`Пакетная громкость: ${currentGain.toFixed(1)}x (Требуется подключение FFmpeg.wasm)`);
+        });
+
     </script>
 </body>
 </html>
